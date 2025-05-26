@@ -4,6 +4,10 @@ Easily arrange and print multiple images or designs on a single page with automa
 
 **Tagline:** Print smart. Cut easy.
 
+## Try Now!
+
+[Try it now!](https://layout-crafter.vercel.app/)
+
 ## Screenshots
 
 | **Initial Layout**                                                | **Photo Size**                                                   | **Photo selector**                                              |
@@ -35,7 +39,9 @@ This project is built with:
 
 ---
 
-## Started and prototyped with [Lovable](https://lovable.dev/projects/de92518e-47c2-42b5-a3d3-314649c6bf05)
+### Started and prototyped with [Lovable](https://lovable.dev/projects/de92518e-47c2-42b5-a3d3-314649c6bf05)
+
+---
 
 ## Inspiration
 
