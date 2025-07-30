@@ -1,4 +1,4 @@
-import { RefObject } from "react";
+import { RefObject, useEffect } from "react";
 import { CollageCanvas } from "./CollageCanvas";
 import { useCollage } from "@/context/CollageContext";
 import { useCanvasControlsContext } from "@/context/CanvasControlsContext";
@@ -20,6 +20,24 @@ export function CanvasContainer({ collageRef }: CanvasContainerProps) {
     handleMouseUp,
     handleWheel,
   } = useCanvasControlsContext();
+
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    if (!container) return;
+
+    const handleWheelEvent = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleWheel(e);
+    };
+
+    container.addEventListener('wheel', handleWheelEvent, { passive: false });
+
+    return () => {
+      container.removeEventListener('wheel', handleWheelEvent);
+    };
+  }, [handleWheel, canvasContainerRef]);
+
   return (
     <div
       ref={canvasContainerRef}
@@ -27,18 +45,13 @@ export function CanvasContainer({ collageRef }: CanvasContainerProps) {
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onWheel={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        handleWheel(e.nativeEvent);
-      }}
+
       onContextMenu={(e) => e.preventDefault()} // Prevent context menu on right click
     >
       <div
         style={{
-          transform: `scale(${zoom / 100}) translate(${dragOffset.x}px, ${
-            dragOffset.y
-          }px)`,
+          transform: `scale(${zoom / 100}) translate(${dragOffset.x}px, ${dragOffset.y
+            }px)`,
           transformOrigin: "center",
           transition: isDragging ? "none" : "transform 0.2s ease",
         }}
