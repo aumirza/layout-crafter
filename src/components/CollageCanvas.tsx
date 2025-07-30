@@ -21,6 +21,8 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
       showCuttingMarkers,
       markerColor,
       selectedUnit,
+      rowGap,
+      columnGap,
     } = collageState;
     const [activeCell, setActiveCell] = useState<{
       row: number;
@@ -111,7 +113,10 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
                 const cellPosition = CanvasRenderer.getCellPosition(
                   rowIndex,
                   colIndex,
-                  cellDimensions
+                  cellDimensions,
+                  rowGap,
+                  columnGap,
+                  dpi
                 );
 
                 return (
@@ -281,13 +286,18 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
           )}
         </div>
 
-        {/* <div className="text-center text-sm text-muted-foreground mt-2">
+        <div className="text-center text-sm text-muted-foreground mt-2">
           <p>
-            {pageSize.label} - {formatDimension(pageSize.width)}×{formatDimension(pageSize.height)} 
-            ({cells.flat().filter(cell => cell.imageId !== null).length} of {rows * columns} cells filled)
+            {pageSize.label} - {formatDimension(pageSize.width)}×
+            {formatDimension(pageSize.height)}(
+            {cells.flat().filter((cell) => cell.imageId !== null).length} of{" "}
+            {rows * columns} cells filled)
           </p>
-          <p className="text-xs mt-1">Photo size: {formatDimension(layout.cellWidth)}×{formatDimension(layout.cellHeight)}</p>
-        </div> */}
+          <p className="text-xs mt-1">
+            Photo size: {formatDimension(layout.cellWidth)}×
+            {formatDimension(layout.cellHeight)}
+          </p>
+        </div>
       </div>
     );
   }
