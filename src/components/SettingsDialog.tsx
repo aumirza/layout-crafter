@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PresetManager } from "./PresetManager";
+import { GapControls } from "./GapControls";
 import { MeasurementUnit } from "@/types/collage";
 import { toast } from "@/hooks/use-toast";
 import { Download, Upload, RotateCcw } from "lucide-react";
@@ -37,6 +38,9 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     toggleCuttingMarkers,
     settings,
     updateSettings,
+    setRowGap,
+    setColumnGap,
+    setGapsLinked,
   } = useCollage();
 
   // Get current values from context and localStorage
@@ -50,6 +54,15 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const [showCuttingMarkers, setShowCuttingMarkers] = useState(() => {
     return localStorage.getItem("defaultShowCuttingMarkers") === "true";
   });
+
+  // Synchronize dialog state with CollageContext state
+  useEffect(() => {
+    setDefaultUnit(collageState.selectedUnit);
+  }, [collageState.selectedUnit]);
+
+  useEffect(() => {
+    setShowCuttingMarkers(collageState.showCuttingMarkers);
+  }, [collageState.showCuttingMarkers]);
 
   const handleDefaultUnitChange = (unit: MeasurementUnit) => {
     setDefaultUnit(unit);
@@ -97,6 +110,11 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
       showCuttingMarkers,
       autoSave: settings.autoSave,
       exportQuality: settings.exportQuality,
+      gapSettings: {
+        rowGap: collageState.rowGap,
+        columnGap: collageState.columnGap,
+        gapsLinked: collageState.gapsLinked,
+      },
       pagePresetSettings: localStorage.getItem("pageSizePresetSettings"),
       layoutPresetSettings: localStorage.getItem("layoutPresetSettings"),
       collagePreferences: localStorage.getItem("collagePreferences"),
@@ -153,6 +171,19 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
 
         if (importedSettings.exportQuality) {
           updateSettings("exportQuality", importedSettings.exportQuality);
+        }
+
+        // Import gap settings
+        if (importedSettings.gapSettings) {
+          if (typeof importedSettings.gapSettings.rowGap === "number") {
+            setRowGap(importedSettings.gapSettings.rowGap);
+          }
+          if (typeof importedSettings.gapSettings.columnGap === "number") {
+            setColumnGap(importedSettings.gapSettings.columnGap);
+          }
+          if (typeof importedSettings.gapSettings.gapsLinked === "boolean") {
+            setGapsLinked(importedSettings.gapSettings.gapsLinked);
+          }
         }
 
         // Import preset settings
@@ -236,6 +267,11 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     // Reset current session to defaults
     setUnit("mm");
     toggleCuttingMarkers(false);
+    
+    // Reset gap settings to defaults
+    setRowGap(2);
+    setColumnGap(2);
+    setGapsLinked(true);
 
     toast({
       title: "Settings reset",
@@ -337,6 +373,39 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                         <SelectItem value="ultra">Ultra</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Layout Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Current Page Size</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {collageState.pageSize.label} ({collageState.pageSize.width}×{collageState.pageSize.height}mm)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Current Photo Size</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {collageState.layout.label} ({collageState.layout.cellWidth}×{collageState.layout.cellHeight}mm)
+                    </p>
+                  </div>
+
+                  <div className="pt-2">
+                    <GapControls
+                      rowGap={collageState.rowGap}
+                      columnGap={collageState.columnGap}
+                      gapsLinked={collageState.gapsLinked}
+                      onRowGapChange={setRowGap}
+                      onColumnGapChange={setColumnGap}
+                      onLinkedChange={setGapsLinked}
+                      unit={collageState.selectedUnit}
+                    />
                   </div>
                 </CardContent>
               </Card>
