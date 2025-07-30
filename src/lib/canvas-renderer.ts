@@ -41,6 +41,48 @@ export interface CanvasRendererOptions {
   forExport?: boolean;
 }
 
+// Standalone functions for testing
+export function getCellPosition(
+  row: number,
+  col: number,
+  cellDimensions: { width: number; height: number },
+  rowGap: number,
+  columnGap: number,
+  dpi: number,
+  margin: number = 0
+) {
+  const rowGapPixels = (rowGap * dpi) / 25.4;
+  const columnGapPixels = (columnGap * dpi) / 25.4;
+  
+  return {
+    x: margin + col * (cellDimensions.width + columnGapPixels),
+    y: margin + row * (cellDimensions.height + rowGapPixels),
+    width: cellDimensions.width,
+    height: cellDimensions.height,
+  };
+}
+
+export function calculateGridDimensions(
+  rows: number,
+  columns: number,
+  cellDimensions: { width: number; height: number },
+  rowGap: number,
+  columnGap: number,
+  dpi: number,
+  margin: number = 0
+) {
+  const rowGapPixels = (rowGap * dpi) / 25.4;
+  const columnGapPixels = (columnGap * dpi) / 25.4;
+  
+  const totalRowGaps = Math.max(0, rows - 1) * rowGapPixels;
+  const totalColumnGaps = Math.max(0, columns - 1) * columnGapPixels;
+  
+  return {
+    width: columns * cellDimensions.width + totalColumnGaps + 2 * margin,
+    height: rows * cellDimensions.height + totalRowGaps + 2 * margin,
+  };
+}
+
 export class CanvasRenderer {
   private static mmToPixels(mm: number, dpi: number = 96): number {
     return (mm / 25.4) * dpi;
@@ -71,12 +113,18 @@ export class CanvasRenderer {
   static getCellPosition(
     rowIndex: number,
     colIndex: number,
-    cellDimensions: ReturnType<typeof CanvasRenderer.getCellDimensions>
+    cellDimensions: ReturnType<typeof CanvasRenderer.getCellDimensions>,
+    rowGap: number = 0,
+    columnGap: number = 0,
+    dpi: number = 96
   ) {
     const { cellWidth, cellHeight, margin } = cellDimensions;
+    const rowGapPixels = this.mmToPixels(rowGap, dpi);
+    const columnGapPixels = this.mmToPixels(columnGap, dpi);
+    
     return {
-      left: margin + colIndex * cellWidth,
-      top: margin + rowIndex * cellHeight,
+      left: margin + colIndex * (cellWidth + columnGapPixels),
+      top: margin + rowIndex * (cellHeight + rowGapPixels),
       width: cellWidth,
       height: cellHeight,
     };
@@ -172,7 +220,7 @@ export class CanvasRenderer {
     options: CanvasRendererOptions = {}
   ): HTMLDivElement {
     const { dpi = 96, forExport = false } = options;
-    const { pageSize, layout, cells, images, showCuttingMarkers, markerColor } =
+    const { pageSize, layout, cells, images, showCuttingMarkers, markerColor, rowGap, columnGap } =
       collageState;
 
     // Calculate dimensions
@@ -201,7 +249,10 @@ export class CanvasRenderer {
         const cellPosition = this.getCellPosition(
           rowIndex,
           colIndex,
-          cellDimensions
+          cellDimensions,
+          rowGap,
+          columnGap,
+          dpi
         );
         const hasImage = cell.imageId !== null;
         const image = images.find((img) => img.id === cell.imageId);
