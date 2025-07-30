@@ -41,9 +41,6 @@ export function InitialSetupModal({
   onClose,
   onApplySettings,
 }: InitialSetupModalProps) {
-  const [pageSize, setPageSize] = useState(pageSizes[0]); // Default to first page size
-  const [layout, setLayout] = useState(layoutPresets[0]); // Default to first layout
-
   const [spaceOptimization, setSpaceOptimization] =
     useState<SpaceOptimization>("loose");
   const [selectedUnit, setSelectedUnit] = useState<MeasurementUnit>("mm");
@@ -54,7 +51,11 @@ export function InitialSetupModal({
     "pageSize" | "layout"
   >("pageSize");
 
-  const { updateLayout, updatePageSize } = useCollage();
+  const { updateLayout, updatePageSize, collageState } = useCollage();
+
+  // Use page size and layout from the store/context
+  const pageSize = collageState.pageSize;
+  const layout = collageState.layout;
 
   // Get presets and actions from the store
   const allPageSizes = usePresetStore((state) => state.getAllPageSizes)();
@@ -106,8 +107,8 @@ export function InitialSetupModal({
         height: pageSizeData.height,
         margin: pageSizeData.margin,
       });
-      // Select the newly created page size
-      setPageSize(newCustomPageSize);
+      // Update the context with the newly created page size
+      updatePageSize(newCustomPageSize);
     } else {
       const layoutData = data as LayoutData;
       // Use the preset store to add a new custom layout
@@ -117,8 +118,8 @@ export function InitialSetupModal({
         cellWidth: layoutData.cellWidth,
         cellHeight: layoutData.cellHeight,
       });
-      // Select the newly created layout
-      setLayout(newCustomLayout);
+      // Update the context with the newly created layout
+      updateLayout(newCustomLayout);
     }
     setCustomDialogOpen(false);
   };
