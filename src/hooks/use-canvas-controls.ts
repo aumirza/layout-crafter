@@ -33,7 +33,7 @@ export function useCanvasControls({ pageSize }: UseCanvasControlsProps) {
     const paperHeightPx = mmToPixels(pageSize.height);
 
     // Leave some padding around the paper (80px on each side)
-    const padding = 160;
+    const padding = 40;
     const availableWidth = containerRect.width - padding;
     const availableHeight = containerRect.height - padding;
 
