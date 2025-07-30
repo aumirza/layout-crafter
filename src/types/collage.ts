@@ -46,6 +46,9 @@ export interface CollageState {
   showCuttingMarkers: boolean;
   markerColor: string;
   selectedUnit: MeasurementUnit;
+  rowGap: number; // in mm, default: 2
+  columnGap: number; // in mm, default: 2
+  gapsLinked: boolean; // default: true
 }
 
 export type ExportFormat = "png" | "pdf" | "print";
