@@ -46,6 +46,11 @@ interface CollageContextType {
   setUnit: (unit: MeasurementUnit) => void;
   createCustomPageSize: (width: number, height: number, margin: number) => void;
   createCustomLayout: (cellWidth: number, cellHeight: number) => void;
+  // Gap management functions
+  setRowGap: (gap: number) => void;
+  setColumnGap: (gap: number) => void;
+  setGapsLinked: (linked: boolean) => void;
+  updateGap: (type: 'row' | 'column', value: number) => void;
   // Add shared app settings
   settings: {
     autoSave: boolean;
@@ -63,15 +68,24 @@ function calculateGridDimensions(
   cellWidth: number,
   cellHeight: number,
   margin: number,
-  spaceOptimization: SpaceOptimization
+  spaceOptimization: SpaceOptimization,
+  rowGap: number = 0,
+  columnGap: number = 0
 ): LayoutCalculation {
   // Calculate usable area by removing margins from all sides
   const usableWidth = pageWidth - margin * 2;
   const usableHeight = pageHeight - margin * 2;
 
   // Calculate portrait orientation (cellWidth x cellHeight)
-  const portraitColumns = Math.floor(usableWidth / cellWidth);
-  const portraitRows = Math.floor(usableHeight / cellHeight);
+  // Account for gaps: if we have n columns, we need (n-1) column gaps
+  // Similarly for rows: if we have n rows, we need (n-1) row gaps
+  let portraitColumns = Math.floor((usableWidth + columnGap) / (cellWidth + columnGap));
+  let portraitRows = Math.floor((usableHeight + rowGap) / (cellHeight + rowGap));
+  
+  // Ensure we don't have negative values
+  portraitColumns = Math.max(0, portraitColumns);
+  portraitRows = Math.max(0, portraitRows);
+  
   const portraitTotal = portraitColumns * portraitRows;
 
   // For loose fit, we only use one orientation
@@ -86,8 +100,13 @@ function calculateGridDimensions(
 
   // For tight fit, try both orientations to see which gives more cells
   // Calculate landscape orientation (cellHeight x cellWidth) - swapping dimensions
-  const landscapeColumns = Math.floor(usableWidth / cellHeight);
-  const landscapeRows = Math.floor(usableHeight / cellWidth);
+  let landscapeColumns = Math.floor((usableWidth + columnGap) / (cellHeight + columnGap));
+  let landscapeRows = Math.floor((usableHeight + rowGap) / (cellWidth + rowGap));
+  
+  // Ensure we don't have negative values
+  landscapeColumns = Math.max(0, landscapeColumns);
+  landscapeRows = Math.max(0, landscapeRows);
+  
   const landscapeTotal = landscapeColumns * landscapeRows;
 
   if (landscapeTotal > portraitTotal) {
@@ -126,7 +145,9 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     initialLayout.cellWidth,
     initialLayout.cellHeight,
     initialPageSize.margin,
-    "loose"
+    "loose",
+    2, // default rowGap
+    2  // default columnGap
   );
 
   const [collageState, setCollageState] = useState<CollageState>({
@@ -140,12 +161,15 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     showCuttingMarkers: getDefaultShowCuttingMarkers(),
     markerColor: "#9ca3af",
     selectedUnit: getDefaultUnit(),
+    rowGap: 2, // Default: 2mm
+    columnGap: 2, // Default: 2mm
+    gapsLinked: true, // Default: linked
   });
 
   // App settings state
   const [appSettings, setAppSettings] = useState({
     autoSave: localStorage.getItem("autoSave") !== "false",
-    exportQuality: localStorage.getItem("exportQuality") || "high",
+    exportQuality: localStorage.getItem("exportQuality") || "medium",
   });
 
   // Update settings function
@@ -168,7 +192,9 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         prev.layout.cellWidth,
         prev.layout.cellHeight,
         newPageSize.margin,
-        prev.spaceOptimization
+        prev.spaceOptimization,
+        prev.rowGap,
+        prev.columnGap
       );
 
       return {
@@ -203,7 +229,9 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         prev.layout.cellWidth,
         prev.layout.cellHeight,
         customSize.margin,
-        prev.spaceOptimization
+        prev.spaceOptimization,
+        prev.rowGap,
+        prev.columnGap
       );
 
       return {
@@ -243,7 +271,9 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         newLayout.cellWidth,
         newLayout.cellHeight,
         prev.pageSize.margin,
-        prev.spaceOptimization
+        prev.spaceOptimization,
+        prev.rowGap,
+        prev.columnGap
       );
 
       // Create a new cells grid based on the calculated dimensions
@@ -285,7 +315,9 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         cellWidth,
         cellHeight,
         prev.pageSize.margin,
-        prev.spaceOptimization
+        prev.spaceOptimization,
+        prev.rowGap,
+        prev.columnGap
       );
 
       // Create a new cells grid based on the calculated dimensions
@@ -475,7 +507,9 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         prev.layout.cellWidth,
         prev.layout.cellHeight,
         prev.pageSize.margin,
-        value
+        value,
+        prev.rowGap,
+        prev.columnGap
       );
 
       // Create a new cells grid based on the calculated dimensions
@@ -590,6 +624,42 @@ export function CollageProvider({ children }: { children: ReactNode }) {
       ...prev,
       selectedUnit: unit,
     }));
+  };
+
+  // Gap management functions
+  const setRowGap = (gap: number) => {
+    setCollageState((prev) => ({
+      ...prev,
+      rowGap: gap,
+      // If gaps are linked, also update column gap
+      columnGap: prev.gapsLinked ? gap : prev.columnGap,
+    }));
+  };
+
+  const setColumnGap = (gap: number) => {
+    setCollageState((prev) => ({
+      ...prev,
+      columnGap: gap,
+      // If gaps are linked, also update row gap
+      rowGap: prev.gapsLinked ? gap : prev.rowGap,
+    }));
+  };
+
+  const setGapsLinked = (linked: boolean) => {
+    setCollageState((prev) => ({
+      ...prev,
+      gapsLinked: linked,
+      // If linking is enabled, sync column gap to row gap
+      columnGap: linked ? prev.rowGap : prev.columnGap,
+    }));
+  };
+
+  const updateGap = (type: 'row' | 'column', value: number) => {
+    if (type === 'row') {
+      setRowGap(value);
+    } else {
+      setColumnGap(value);
+    }
   };
 
   const distributeEqually = () => {
@@ -709,7 +779,9 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         prev.layout.cellWidth,
         prev.layout.cellHeight,
         prev.pageSize.margin,
-        prev.spaceOptimization
+        prev.spaceOptimization,
+        prev.rowGap,
+        prev.columnGap
       );
 
       // Create a new cells grid
@@ -776,6 +848,10 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         updateLayout,
         createCustomPageSize: createCustomPageSizeImpl,
         createCustomLayout: createCustomLayoutImpl,
+        setRowGap,
+        setColumnGap,
+        setGapsLinked,
+        updateGap,
         settings: appSettings,
         updateSettings,
       }}
