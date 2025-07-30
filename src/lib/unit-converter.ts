@@ -76,6 +76,16 @@ export class UnitConverter {
     return value; // Already in mm
   }
   
+  // Convert from millimeters to the specified unit
+  public static convertFromMm(value: number, unit: 'mm' | 'cm' | 'in'): number {
+    if (unit === 'in') {
+      return this.mmToInches(value);
+    } else if (unit === 'cm') {
+      return this.mmToCm(value);
+    }
+    return value; // Already in mm
+  }
+  
   // Format a dimension in the desired unit
   public static formatDimension(value: number, targetUnit: 'mm' | 'cm' | 'in', decimals: number = 2): string {
     let convertedValue: number;
