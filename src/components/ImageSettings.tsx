@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   CollageImage,
   ImageFitOption,
@@ -21,8 +20,6 @@ interface ImageSettingsProps {
 }
 
 export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
-  const [isFitMenuOpen, setIsFitMenuOpen] = useState(false);
-  const [isOrientationMenuOpen, setIsOrientationMenuOpen] = useState(false);
   const { updateImageSettings } = useCollage();
 
   const handleFitChange = (fit: ImageFitOption) => {
@@ -31,7 +28,6 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
     } else {
       updateImageSettings(image.id, { fit });
     }
-    setIsFitMenuOpen(false);
   };
 
   const handleOrientationChange = (orientation: ImageOrientation) => {
@@ -40,7 +36,6 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
     } else {
       updateImageSettings(image.id, { orientation });
     }
-    setIsOrientationMenuOpen(false);
   };
 
   // Get the current fit mode label
@@ -73,7 +68,7 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
 
   return (
     <div className="flex gap-1">
-      <DropdownMenu open={isFitMenuOpen} onOpenChange={setIsFitMenuOpen}>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
@@ -81,27 +76,38 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
             className={cn(
               "h-6 text-xs flex gap-1 items-center",
               image.fit === "contain" &&
-                "bg-blue-50 text-blue-600 border-blue-200",
+              "bg-blue-50 text-blue-600 border-blue-200",
               image.fit === "fill" &&
-                "bg-green-50 text-green-600 border-green-200",
+              "bg-green-50 text-green-600 border-green-200",
               image.fit === "original" &&
-                "bg-amber-50 text-amber-600 border-amber-200"
+              "bg-amber-50 text-amber-600 border-amber-200",
+              image.fit === "cover" &&
+              "bg-purple-50 text-purple-600 border-purple-200"
             )}
           >
             <Maximize className="h-3 w-3" />
             <span>{getFitLabel()}</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => handleFitChange("cover")}>
+        <DropdownMenuContent align="start" className="min-w-[120px] z-[9999]">
+          <DropdownMenuItem
+            onClick={() => handleFitChange("cover")}
+            className="cursor-pointer"
+          >
             <ImageIcon className="h-4 w-4 mr-2" />
             Fill
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFitChange("contain")}>
+          <DropdownMenuItem
+            onClick={() => handleFitChange("contain")}
+            className="cursor-pointer"
+          >
             <Maximize className="h-4 w-4 mr-2" />
             Fit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFitChange("fill")}>
+          <DropdownMenuItem
+            onClick={() => handleFitChange("fill")}
+            className="cursor-pointer"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4 mr-2"
@@ -117,7 +123,10 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
             </svg>
             Stretch
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFitChange("original")}>
+          <DropdownMenuItem
+            onClick={() => handleFitChange("original")}
+            className="cursor-pointer"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4 mr-2"
@@ -136,10 +145,7 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DropdownMenu
-        open={isOrientationMenuOpen}
-        onOpenChange={setIsOrientationMenuOpen}
-      >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
@@ -147,17 +153,22 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
             className={cn(
               "h-6 text-xs flex gap-1 items-center",
               image.orientation === "portrait" &&
-                "bg-violet-50 text-violet-600 border-violet-200",
+              "bg-violet-50 text-violet-600 border-violet-200",
               image.orientation === "landscape" &&
-                "bg-orange-50 text-orange-600 border-orange-200"
+              "bg-orange-50 text-orange-600 border-orange-200",
+              image.orientation === "auto" &&
+              "bg-gray-50 text-gray-600 border-gray-200"
             )}
           >
             <RotateCw className="h-3 w-3" />
             <span>{getOrientationLabel()}</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => handleOrientationChange("auto")}>
+        <DropdownMenuContent align="start" className="min-w-[120px] z-[9999]">
+          <DropdownMenuItem
+            onClick={() => handleOrientationChange("auto")}
+            className="cursor-pointer"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4 mr-2"
@@ -173,7 +184,10 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
             </svg>
             Auto
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleOrientationChange("portrait")}>
+          <DropdownMenuItem
+            onClick={() => handleOrientationChange("portrait")}
+            className="cursor-pointer"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4 mr-2"
@@ -190,6 +204,7 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => handleOrientationChange("landscape")}
+            className="cursor-pointer"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
