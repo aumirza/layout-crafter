@@ -3,6 +3,7 @@ import { PageSizeSelector } from "./PageSizeSelector";
 import { LayoutSelector } from "./LayoutSelector";
 import { ImageUploader } from "./ImageUploader";
 import { ExportPanel } from "./ExportPanel";
+import { GapControls } from "./GapControls";
 import {
   Accordion,
   AccordionContent,
@@ -18,12 +19,32 @@ import {
   SidebarHeader,
 } from "./ui/sidebar";
 import { Link } from "react-router-dom";
+import { useCollage } from "@/context/CollageContext";
 
 interface CollageSidebarProps {
   collageRef: RefObject<HTMLDivElement>;
 }
 
 export function CollageSidebar({ collageRef }: CollageSidebarProps) {
+  const {
+    collageState,
+    setRowGap,
+    setColumnGap,
+    setGapsLinked,
+  } = useCollage();
+
+  const ConnectedGapControls = () => (
+    <GapControls
+      rowGap={collageState.rowGap}
+      columnGap={collageState.columnGap}
+      gapsLinked={collageState.gapsLinked}
+      onRowGapChange={setRowGap}
+      onColumnGapChange={setColumnGap}
+      onLinkedChange={setGapsLinked}
+      unit={collageState.selectedUnit}
+    />
+  );
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -64,6 +85,15 @@ export function CollageSidebar({ collageRef }: CollageSidebarProps) {
                 </AccordionTrigger>
                 <AccordionContent>
                   <ImageUploader />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="spacing">
+                <AccordionTrigger className="text-lg font-semibold">
+                  Spacing
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ConnectedGapControls />
                 </AccordionContent>
               </AccordionItem>
 
