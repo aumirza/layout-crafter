@@ -53,19 +53,19 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary transition-colors duration-300 overflow-x-hidden">
       {/* Background Decor Gradients */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-tr from-primary/20 via-purple-500/10 to-blue-500/10 blur-[120px] rounded-full opacity-70 dark:opacity-40" />
-        <div className="absolute top-[40%] -left-[10%] w-[500px] h-[500px] bg-primary/10 blur-[100px] rounded-full" />
-        <div className="absolute top-[70%] -right-[10%] w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full" />
+        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-linear-to-tr from-primary/20 via-purple-500/10 to-blue-500/10 blur-[120px] rounded-full opacity-70 dark:opacity-40" />
+        <div className="absolute top-[40%] left-[-10%] w-[500px] h-[500px] bg-primary/10 blur-[100px] rounded-full" />
+        <div className="absolute top-[70%] right-[-10%] w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full" />
       </div>
 
       {/* Sticky Header Nav */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/75 border-b border-border/40 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+            <div className="h-9 w-9 rounded-xl bg-linear-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
               <Layout className="h-5 w-5" />
             </div>
-            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+            <span className="font-extrabold text-xl tracking-tight bg-linear-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
               Layout<span className="text-primary">Crafter</span>
             </span>
             <Badge variant="outline" className="hidden sm:inline-flex text-[10px] uppercase tracking-wider font-semibold py-0.5 px-2 border-primary/30 text-primary">
@@ -133,7 +133,7 @@ export default function LandingPage() {
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] text-foreground">
               Design Print-Ready Photo Collages{" "}
-              <span className="bg-gradient-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent">
                 in Seconds
               </span>
             </h1>
@@ -205,7 +205,7 @@ export default function LandingPage() {
               </div>
 
               {/* Interactive Sandbox Layout Body */}
-              <div className="p-4 sm:p-6 md:p-8 bg-gradient-to-b from-card to-background grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              <div className="p-4 sm:p-6 md:p-8 bg-linear-to-b from-card to-background grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
                 {/* Left Side: Dynamic Controls Panel */}
                 <div className="lg:col-span-4 space-y-5 bg-muted/40 p-4 rounded-xl border border-border/40">
                   <div className="flex items-center justify-between">
@@ -333,7 +333,7 @@ export default function LandingPage() {
                         {MOCK_PHOTOS.slice(0, 3).map((src, idx) => (
                           <div
                             key={idx}
-                            className="aspect-[3/4] overflow-hidden bg-muted relative group/item"
+                            className="aspect-3/4 overflow-hidden bg-muted relative group/item"
                             style={{ borderRadius: `${radiusValue}px` }}
                           >
                             <img
@@ -353,7 +353,7 @@ export default function LandingPage() {
                         style={{ gap: `${gapValue}px` }}
                       >
                         <div
-                          className="col-span-2 row-span-2 aspect-[4/3] overflow-hidden bg-muted relative group/item"
+                          className="col-span-2 row-span-2 aspect-4/3 overflow-hidden bg-muted relative group/item"
                           style={{ borderRadius: `${radiusValue}px` }}
                         >
                           <img
@@ -395,7 +395,7 @@ export default function LandingPage() {
                           <div
                             key={idx}
                             className={`overflow-hidden bg-muted relative group/item ${
-                              idx === 0 ? "col-span-2 aspect-[16/10]" : "aspect-square"
+                              idx === 0 ? "col-span-2 aspect-16/10" : "aspect-square"
                             }`}
                             style={{ borderRadius: `${radiusValue}px` }}
                           >
@@ -453,7 +453,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Bento Card 1 */}
-            <div className="md:col-span-2 rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-6 sm:p-8 hover:border-primary/50 transition-all duration-300 shadow-md group">
+            <div className="md:col-span-2 rounded-2xl border border-border/60 bg-linear-to-br from-card via-card to-primary/5 p-6 sm:p-8 hover:border-primary/50 transition-all duration-300 shadow-md group">
               <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <LayoutGrid className="h-6 w-6" />
               </div>
@@ -498,7 +498,7 @@ export default function LandingPage() {
             </div>
 
             {/* Bento Card 4 */}
-            <div className="md:col-span-2 rounded-2xl border border-border/60 bg-gradient-to-tr from-card via-card to-purple-500/5 p-6 sm:p-8 hover:border-primary/50 transition-all duration-300 shadow-md group">
+            <div className="md:col-span-2 rounded-2xl border border-border/60 bg-linear-to-tr from-card via-card to-purple-500/5 p-6 sm:p-8 hover:border-primary/50 transition-all duration-300 shadow-md group">
               <div className="h-12 w-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <ShieldCheck className="h-6 w-6" />
               </div>
@@ -602,7 +602,7 @@ export default function LandingPage() {
                   key={idx}
                   className="bg-card rounded-xl border border-border/60 overflow-hidden hover:border-primary/50 transition-all duration-300 shadow-sm group hover:-translate-y-1"
                 >
-                  <div className="aspect-[16/10] overflow-hidden bg-muted relative">
+                  <div className="aspect-16/10 overflow-hidden bg-muted relative">
                     <img
                       src={template.img}
                       alt={template.title}
@@ -735,8 +735,8 @@ export default function LandingPage() {
 
         {/* HIGH-CONVERSION CTA BANNER */}
         <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="relative rounded-3xl bg-gradient-to-r from-primary via-purple-600 to-blue-600 p-8 sm:p-12 md:p-16 text-primary-foreground text-center overflow-hidden shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,_var(--tw-gradient-stops))] from-white/10 to-transparent pointer-events-none" />
+          <div className="relative rounded-3xl bg-linear-to-r from-primary via-purple-600 to-blue-600 p-8 sm:p-12 md:p-16 text-primary-foreground text-center overflow-hidden shadow-2xl">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,var(--tw-gradient-stops))] from-white/10 to-transparent pointer-events-none" />
             <div className="relative max-w-2xl mx-auto space-y-6">
               <Badge className="bg-white/20 text-white hover:bg-white/30 backdrop-blur-md border-0 text-xs font-semibold px-3 py-1">
                 Start Building Now

@@ -41,7 +41,7 @@ export function CanvasContainer({ collageRef }: CanvasContainerProps) {
   return (
     <div
       ref={canvasContainerRef}
-      className="flex-1 overflow-auto p-8 sm:p-12 flex justify-center items-center active:cursor-grabbing relative select-none bg-muted/30 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:20px_20px]"
+      className="flex-1 overflow-auto p-8 sm:p-12 flex justify-center items-center active:cursor-grabbing relative select-none bg-muted/30 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] bg-size-[20px_20px]"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

@@ -114,7 +114,7 @@ export function EqualDivisionModal({
       <DialogContent className="sm:max-w-[560px] max-h-[92vh] overflow-y-auto">
         <DialogHeader className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
+            <div className="h-8 w-8 rounded-xl bg-linear-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
               <Grid className="h-4 w-4" />
             </div>
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
@@ -284,7 +284,7 @@ export function EqualDivisionModal({
           </div>
 
           {/* Result Card & Visual Grid Preview */}
-          <div className="bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-blue-500/10 border border-purple-500/20 rounded-xl p-3.5 space-y-3">
+          <div className="bg-linear-to-r from-purple-500/10 via-indigo-500/10 to-blue-500/10 border border-purple-500/20 rounded-xl p-3.5 space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400 tracking-wider">
@@ -363,7 +363,7 @@ export function EqualDivisionModal({
           </Button>
           <Button
             onClick={handleApply}
-            className="rounded-xl text-xs font-bold gap-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md"
+            className="rounded-xl text-xs font-bold gap-1.5 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md"
           >
             Apply Equal Division
             <ArrowRight className="h-3.5 w-3.5" />

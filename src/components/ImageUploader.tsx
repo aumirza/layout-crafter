@@ -138,14 +138,14 @@ export function ImageUploader() {
                 className="flex flex-col bg-white p-2 rounded border group relative"
               >
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-muted rounded overflow-hidden flex-shrink-0">
+                  <div className="w-10 h-10 bg-muted rounded overflow-hidden shrink-0">
                     <img
                       src={image.src}
                       alt={image.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="ml-2 overflow-hidden flex-grow">
+                  <div className="ml-2 overflow-hidden grow">
                     <p className="text-sm font-medium truncate">{image.name}</p>
                     <div className="flex items-center mt-1">
                       <label className="text-xs text-muted-foreground mr-2">
@@ -165,7 +165,7 @@ export function ImageUploader() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-muted-foreground flex-shrink-0"
+                    className="h-6 w-6 text-muted-foreground shrink-0"
                     onClick={() => removeImage(image.id)}
                   >
                     <X className="h-4 w-4" />

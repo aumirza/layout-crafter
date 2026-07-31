@@ -215,19 +215,19 @@ export class CanvasRenderer {
     return [
       {
         position:
-          "absolute left-0 top-0 w-2 h-2 border-t-[1px] border-l-[1px] border-gray-400",
+          "absolute left-0 top-0 w-2 h-2 border-t border-l border-gray-400",
       },
       {
         position:
-          "absolute right-0 top-0 w-2 h-2 border-t-[1px] border-r-[1px] border-gray-400",
+          "absolute right-0 top-0 w-2 h-2 border-t border-r border-gray-400",
       },
       {
         position:
-          "absolute left-0 bottom-0 w-2 h-2 border-b-[1px] border-l-[1px] border-gray-400",
+          "absolute left-0 bottom-0 w-2 h-2 border-b border-l border-gray-400",
       },
       {
         position:
-          "absolute right-0 bottom-0 w-2 h-2 border-b-[1px] border-r-[1px] border-gray-400",
+          "absolute right-0 bottom-0 w-2 h-2 border-b border-r border-gray-400",
       },
     ];
   }
