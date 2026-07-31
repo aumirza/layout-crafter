@@ -59,12 +59,13 @@ const Editor = () => {
     };
   }, [closeCurrentProject]);
 
+  // Show initial setup modal whenever there is no project ID in URL search params
   useEffect(() => {
-    const hasSeenSetup = sessionStorage.getItem("hasSeenCollageSetup");
-    if (!hasSeenSetup) {
+    const projectId = searchParams.get("project");
+    if (!projectId) {
       setShowSetupModal(true);
     }
-  }, []);
+  }, [searchParams]);
 
   const handleInitialSetup = (settings: Settings) => {
     updatePageSize(settings.pageSize);
@@ -72,7 +73,6 @@ const Editor = () => {
     setSpaceOptimization(settings.spaceOptimization);
     setUnit(settings.selectedUnit);
 
-    sessionStorage.setItem("hasSeenCollageSetup", "true");
     setShowSetupModal(false);
   };
 
