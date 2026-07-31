@@ -104,12 +104,20 @@ export function calculateEqualDivision(
   const totalAvailableWidth = Math.max(0, usableWidth - totalColGaps);
   const totalAvailableHeight = Math.max(0, usableHeight - totalRowGaps);
 
-  const cellWidth = Math.max(1, totalAvailableWidth / columns);
-  const cellHeight = Math.max(1, totalAvailableHeight / rows);
+  const cellWidth = Math.max(0.1, totalAvailableWidth / Math.max(1, columns));
+  const cellHeight = Math.max(0.1, totalAvailableHeight / Math.max(1, rows));
 
-  // Round to 1 decimal place for clean mm display, but keep numeric high precision
-  const roundedCellWidth = Math.round(cellWidth * 10) / 10;
-  const roundedCellHeight = Math.round(cellHeight * 10) / 10;
+  // Floor to 1 decimal place to guarantee rounding never causes cell overflow past margins
+  let roundedCellWidth = Math.floor(cellWidth * 10) / 10;
+  let roundedCellHeight = Math.floor(cellHeight * 10) / 10;
+
+  // Double-check strict boundaries
+  while (columns > 0 && (columns * roundedCellWidth + totalColGaps) > usableWidth + 0.001) {
+    roundedCellWidth = Math.max(0.1, Math.round((roundedCellWidth - 0.1) * 10) / 10);
+  }
+  while (rows > 0 && (rows * roundedCellHeight + totalRowGaps) > usableHeight + 0.001) {
+    roundedCellHeight = Math.max(0.1, Math.round((roundedCellHeight - 0.1) * 10) / 10);
+  }
 
   const formattedCellWidth = UnitConverter.formatDimension(roundedCellWidth, unit, 1);
   const formattedCellHeight = UnitConverter.formatDimension(roundedCellHeight, unit, 1);

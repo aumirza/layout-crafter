@@ -73,6 +73,19 @@ interface CollageContextType {
 
 const CollageContext = createContext<CollageContextType | undefined>(undefined);
 
+// Helper function to count how many cell units fit strictly within usable area without overflowing
+function countFittingUnits(usableSize: number, cellSize: number, gap: number): number {
+  if (cellSize <= 0 || usableSize < cellSize) return 0;
+  let count = Math.floor((usableSize + gap) / (cellSize + gap));
+  while (
+    count > 0 &&
+    count * cellSize + Math.max(0, count - 1) * gap > usableSize + 0.001
+  ) {
+    count--;
+  }
+  return Math.max(0, count);
+}
+
 // Helper function to calculate the maximum number of cells that can fit on a page
 function calculateGridDimensions(
   pageWidth: number,
@@ -85,56 +98,19 @@ function calculateGridDimensions(
   columnGap: number = 0
 ): LayoutCalculation {
   // Calculate usable area by removing margins from all sides
-  const usableWidth = pageWidth - margin * 2;
-  const usableHeight = pageHeight - margin * 2;
+  const usableWidth = Math.max(0, pageWidth - margin * 2);
+  const usableHeight = Math.max(0, pageHeight - margin * 2);
 
-  // Calculate portrait orientation (cellWidth x cellHeight)
-  // Account for gaps: if we have n columns, we need (n-1) column gaps
-  // Similarly for rows: if we have n rows, we need (n-1) row gaps
-  let portraitColumns = Math.floor((usableWidth + columnGap) / (cellWidth + columnGap));
-  let portraitRows = Math.floor((usableHeight + rowGap) / (cellHeight + rowGap));
-  
-  // Ensure we don't have negative values
-  portraitColumns = Math.max(0, portraitColumns);
-  portraitRows = Math.max(0, portraitRows);
-  
-  const portraitTotal = portraitColumns * portraitRows;
-
-  // For loose fit, we only use one orientation
-  if (spaceOptimization === "loose") {
-    return {
-      rows: portraitRows,
-      columns: portraitColumns,
-      orientation: "portrait",
-      totalCells: portraitTotal,
-    };
-  }
-
-  // For tight fit, try both orientations to see which gives more cells
-  // Calculate landscape orientation (cellHeight x cellWidth) - swapping dimensions
-  let landscapeColumns = Math.floor((usableWidth + columnGap) / (cellHeight + columnGap));
-  let landscapeRows = Math.floor((usableHeight + rowGap) / (cellWidth + rowGap));
-  
-  // Ensure we don't have negative values
-  landscapeColumns = Math.max(0, landscapeColumns);
-  landscapeRows = Math.max(0, landscapeRows);
-  
-  const landscapeTotal = landscapeColumns * landscapeRows;
-
-  if (landscapeTotal > portraitTotal) {
-    return {
-      rows: landscapeRows,
-      columns: landscapeColumns,
-      orientation: "landscape",
-      totalCells: landscapeTotal,
-    };
-  }
+  // In standard layout rendering, columns are rendered with cellWidth and rows with cellHeight
+  const columns = countFittingUnits(usableWidth, cellWidth, columnGap);
+  const rows = countFittingUnits(usableHeight, cellHeight, rowGap);
+  const totalCells = columns * rows;
 
   return {
-    rows: portraitRows,
-    columns: portraitColumns,
-    orientation: "portrait",
-    totalCells: portraitTotal,
+    rows,
+    columns,
+    orientation: cellWidth >= cellHeight ? "landscape" : "portrait",
+    totalCells,
   };
 }
 

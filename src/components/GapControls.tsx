@@ -28,9 +28,9 @@ export function GapControls({
   const formattedRow = UnitConverter.formatDimension(rowGap, unit, 1);
   const formattedCol = UnitConverter.formatDimension(columnGap, unit, 1);
 
-  const handleRowSliderChange = (vals: number[]) => {
-    const val = vals[0];
-    if (typeof val === "number") {
+  const handleRowSliderChange = (vals: number[] | number) => {
+    const val = Array.isArray(vals) ? vals[0] : vals;
+    if (typeof val === "number" && !isNaN(val)) {
       onRowGapChange(val);
       if (gapsLinked) {
         onColumnGapChange(val);
@@ -38,9 +38,9 @@ export function GapControls({
     }
   };
 
-  const handleColumnSliderChange = (vals: number[]) => {
-    const val = vals[0];
-    if (typeof val === "number") {
+  const handleColumnSliderChange = (vals: number[] | number) => {
+    const val = Array.isArray(vals) ? vals[0] : vals;
+    if (typeof val === "number" && !isNaN(val)) {
       onColumnGapChange(val);
       if (gapsLinked) {
         onRowGapChange(val);
@@ -144,7 +144,7 @@ export function GapControls({
             onClick={() => setBothGaps(0)}
             className="h-5 px-2 text-[10px] font-mono rounded border-border/60"
           >
-            0mm (Seamless)
+            {UnitConverter.formatDimension(0, unit, 1)} (Seamless)
           </Button>
           <Button
             size="sm"
@@ -152,7 +152,7 @@ export function GapControls({
             onClick={() => setBothGaps(2)}
             className="h-5 px-2 text-[10px] font-mono rounded border-border/60"
           >
-            2mm (Standard)
+            {UnitConverter.formatDimension(2, unit, 1)} (Standard)
           </Button>
           <Button
             size="sm"
@@ -160,7 +160,7 @@ export function GapControls({
             onClick={() => setBothGaps(5)}
             className="h-5 px-2 text-[10px] font-mono rounded border-border/60"
           >
-            5mm (Wide)
+            {UnitConverter.formatDimension(5, unit, 1)} (Wide)
           </Button>
         </div>
       </div>

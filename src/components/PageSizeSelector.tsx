@@ -58,6 +58,7 @@ export function PageSizeSelector() {
     <div className="space-y-2">
       <PresetSelector
         items={allPageSizes}
+        className="w-full"
         selected={selectedPageSize}
         onSelect={(preset) => updatePageSize(preset)}
         onCustomCreate={() => setIsCustomDialogOpen(true)}

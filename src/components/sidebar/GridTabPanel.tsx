@@ -25,6 +25,9 @@ import {
   SlidersHorizontal,
   RotateCcw,
   Maximize2,
+  RectangleVertical,
+  RectangleHorizontal,
+  LayoutTemplate,
 } from "lucide-react";
 import {
   Dialog,
@@ -48,6 +51,7 @@ export function GridTabPanel({ onOpenEqualDivModal }: GridTabPanelProps) {
     setColumnGap,
     createCustomLayout,
     updateLayout,
+    updatePageSize,
     setSpaceOptimization,
   } = useCollage();
 
@@ -62,6 +66,34 @@ export function GridTabPanel({ onOpenEqualDivModal }: GridTabPanelProps) {
     () => collageState.rows * collageState.columns,
     [collageState.rows, collageState.columns]
   );
+
+  const handleSetPageOrientation = (targetOrientation: "portrait" | "landscape") => {
+    const currentW = collageState.pageSize.width;
+    const currentH = collageState.pageSize.height;
+    const isLandscape = currentW >= currentH;
+
+    if (targetOrientation === "landscape" && !isLandscape) {
+      updatePageSize({
+        ...collageState.pageSize,
+        width: Math.max(currentW, currentH),
+        height: Math.min(currentW, currentH),
+      });
+      toast({
+        title: "Page Orientation Changed",
+        description: "Set page to Landscape orientation.",
+      });
+    } else if (targetOrientation === "portrait" && isLandscape) {
+      updatePageSize({
+        ...collageState.pageSize,
+        width: Math.min(currentW, currentH),
+        height: Math.max(currentW, currentH),
+      });
+      toast({
+        title: "Page Orientation Changed",
+        description: "Set page to Portrait orientation.",
+      });
+    }
+  };
 
   const addCustomLayout = usePresetStore((state) => state.addCustomLayout);
   const customLayouts = usePresetStore((state) => state.customLayouts);
@@ -214,6 +246,8 @@ export function GridTabPanel({ onOpenEqualDivModal }: GridTabPanelProps) {
       <TemplatePresetGrid
         selectedLayoutId={currentLayout.id}
         onSelectTemplate={handleSelectTemplate}
+        unit={currentUnit}
+        allLayouts={allLayouts}
         compact
       />
 
@@ -260,25 +294,6 @@ export function GridTabPanel({ onOpenEqualDivModal }: GridTabPanelProps) {
               ({cellW} × {cellH} mm)
             </span>
           )}
-        </div>
-
-        {/* Tight Space Optimization Switch */}
-        <div className="flex items-center space-x-2 bg-muted/30 p-2.5 rounded-lg border border-border/40">
-          <Switch
-            id="space-optimization"
-            checked={spaceOptimization === "tight"}
-            onCheckedChange={(checked) =>
-              setSpaceOptimization(checked ? "tight" : "loose")
-            }
-          />
-          <Label htmlFor="space-optimization" className="text-xs cursor-pointer">
-            <span className="font-semibold block text-foreground">Tight Space Optimization</span>
-            <span className="text-[10px] text-muted-foreground block">
-              {spaceOptimization === "tight"
-                ? "Packs maximum photos per page"
-                : "Preserves consistent orientation"}
-            </span>
-          </Label>
         </div>
       </div>
 

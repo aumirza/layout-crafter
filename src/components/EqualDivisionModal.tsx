@@ -248,7 +248,7 @@ export function EqualDivisionModal({
           <div className="grid grid-cols-2 gap-3 bg-card p-3 rounded-xl border border-border/50">
             <div className="space-y-1">
               <Label className="text-xs font-bold text-foreground">
-                Page Margin (mm)
+                Page Margin ({collageState.selectedUnit || "mm"})
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -266,7 +266,7 @@ export function EqualDivisionModal({
 
             <div className="space-y-1">
               <Label className="text-xs font-bold text-foreground">
-                Cell Gap (mm)
+                Cell Gap ({collageState.selectedUnit || "mm"})
               </Label>
               <div className="flex items-center gap-2">
                 <Input

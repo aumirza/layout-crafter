@@ -4,10 +4,14 @@ import {
   PRECONFIGURED_TEMPLATES,
   PreConfiguredTemplate,
 } from "@/data/template-presets";
+import { UnitConverter } from "@/lib/unit-converter";
+import { MeasurementUnit, LayoutPreset } from "@/types/collage";
 
 interface TemplatePresetGridProps {
   selectedLayoutId: string;
   onSelectTemplate: (template: PreConfiguredTemplate) => void;
+  unit?: MeasurementUnit;
+  allLayouts?: LayoutPreset[];
   compact?: boolean;
   className?: string;
 }
@@ -15,6 +19,8 @@ interface TemplatePresetGridProps {
 export function TemplatePresetGrid({
   selectedLayoutId,
   onSelectTemplate,
+  unit = "mm",
+  allLayouts = [],
   compact = false,
   className = "",
 }: TemplatePresetGridProps) {
@@ -34,6 +40,14 @@ export function TemplatePresetGrid({
         {PRECONFIGURED_TEMPLATES.map((tmpl) => {
           const IconComp = tmpl.icon;
           const isSelected = selectedLayoutId === tmpl.layoutId;
+
+          const targetLayout = allLayouts.find((l) => l.id === tmpl.layoutId);
+          let displayDesc = tmpl.desc;
+          if (targetLayout && unit !== "mm") {
+            const formattedW = UnitConverter.formatDimension(targetLayout.cellWidth, unit, 1);
+            const formattedH = UnitConverter.formatDimension(targetLayout.cellHeight, unit, 1);
+            displayDesc = `${formattedW} × ${formattedH}`;
+          }
 
           return (
             <button
@@ -59,7 +73,7 @@ export function TemplatePresetGrid({
                 )}
               </div>
               <div className="text-xs font-bold truncate text-foreground">{tmpl.name}</div>
-              <div className="text-[10px] text-muted-foreground truncate">{tmpl.desc}</div>
+              <div className="text-[10px] text-muted-foreground truncate">{displayDesc}</div>
             </button>
           );
         })}
