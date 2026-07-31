@@ -18,7 +18,7 @@ export function CanvasControls() {
   } = useCanvasControlsContext();
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 backdrop-blur-xl bg-card/90 border border-border shadow-xl rounded-full px-3.5 py-1.5 flex items-center gap-2 transition-colors text-card-foreground">
+    <div className="absolute bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-20 backdrop-blur-xl bg-card/90 border border-border shadow-xl rounded-full px-3.5 py-1.5 flex items-center gap-2 transition-colors text-card-foreground">
       <div className="flex items-center gap-1 border-r border-border pr-2">
         <Button
           variant="ghost"

@@ -40,7 +40,7 @@ const Editor = () => {
           collageRef={collageRef}
           selectedCellId={selectedCellId}
         />
-        <SidebarInset className="flex flex-col h-screen overflow-hidden bg-background">
+        <SidebarInset className="flex flex-col h-screen overflow-hidden bg-background pb-16 md:pb-0">
           <Header />
           <div className="flex-1 flex overflow-hidden relative">
             <main className="flex-1 flex flex-col overflow-hidden relative">
