@@ -2,7 +2,8 @@
   "name": "Layout Crafter",
   "short_name": "LayoutCrafter",
   "description": "Easily arrange and print multiple images or designs on a single page with automatic cutting markers.",
-  "start_url": "/index.html",
+  "start_url": "/library",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "icons": [

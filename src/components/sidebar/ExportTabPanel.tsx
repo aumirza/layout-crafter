@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SidebarSeparator } from "@/components/ui/sidebar";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   Download,
   Printer,
@@ -39,6 +40,7 @@ const MARKER_COLOR_PRESETS = [
 const DPI_PRESETS = [150, 300, 600, 1200];
 
 export function ExportTabPanel({ collageRef }: ExportTabPanelProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const {
     collageState,
     toggleCuttingMarkers,
@@ -151,12 +153,23 @@ export function ExportTabPanel({ collageRef }: ExportTabPanelProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={clearAll}
+            onClick={() => setShowDeleteConfirm(true)}
             className="h-8 text-xs flex items-center justify-center gap-1.5 border-sidebar-border bg-sidebar hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
           >
             <Trash2 className="size-3.5" />
             Clear All
           </Button>
+
+          <ConfirmDialog
+            open={showDeleteConfirm}
+            onOpenChange={setShowDeleteConfirm}
+            title="Clear Entire Canvas?"
+            description="Are you sure you want to remove all photos and reset cell assignments? This action cannot be undone."
+            confirmText="Clear All"
+            cancelText="Cancel"
+            variant="destructive"
+            onConfirm={clearAll}
+          />
         </div>
       </div>
 

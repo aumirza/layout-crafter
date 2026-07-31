@@ -1,11 +1,14 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, X, Image, Shuffle, DivideSquare } from "lucide-react";
+import { Plus, X, Image, Shuffle, DivideSquare, HardDrive } from "lucide-react";
 import { CollageImage } from "@/types/collage";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ImageSettings } from "./ImageSettings";
 import { useCollage } from "@/context/CollageContext";
+import { MediaPoolPickerModal } from "./MediaPoolPickerModal";
+import { saveMedia } from "@/lib/db";
+import { MediaItem } from "@/types/library";
 import { cn } from "@/lib/utils";
 
 export function ImageUploader() {
@@ -25,6 +28,7 @@ export function ImageUploader() {
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [poolModalOpen, setPoolModalOpen] = useState(false);
 
   const handleFileChange = (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -48,8 +52,21 @@ export function ImageUploader() {
 
     imageFiles.forEach((file) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const src = e.target?.result as string;
+        if (!src) return;
+
+        // Auto-save every uploaded image to local Media Pool first
+        const mediaItem: MediaItem = {
+          id: `media_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          name: file.name,
+          dataUrl: src,
+          type: file.type,
+          size: file.size,
+          addedAt: Date.now(),
+        };
+        await saveMedia(mediaItem);
+
         newImages.push({
           id: `image-${Date.now()}-${processed}`,
           src,
@@ -62,6 +79,10 @@ export function ImageUploader() {
         processed++;
         if (processed === imageFiles.length) {
           handleImagesAdded(newImages);
+          toast({
+            title: "Saved to Media Pool",
+            description: `Added ${imageFiles.length} photo(s) to Media Pool and canvas.`,
+          });
         }
       };
       reader.readAsDataURL(file);
@@ -105,39 +126,60 @@ export function ImageUploader() {
         )}
       </div>
 
-      <div
-        className={cn(
-          "border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2",
-          isDragging
-            ? "border-sidebar-primary bg-sidebar-primary/10"
-            : "border-sidebar-border bg-sidebar-accent/20 hover:bg-sidebar-accent/40 hover:border-sidebar-border/80"
-        )}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <input
-          type="file"
-          ref={fileInputRef}
-          multiple
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => handleFileChange(e.target.files)}
-        />
+      <div className="flex flex-col gap-2">
+        <div
+          className={cn(
+            "border-2 border-dashed rounded-xl p-4 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2",
+            isDragging
+              ? "border-sidebar-primary bg-sidebar-primary/10"
+              : "border-sidebar-border bg-sidebar-accent/20 hover:bg-sidebar-accent/40 hover:border-sidebar-border/80"
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            multiple
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleFileChange(e.target.files)}
+          />
 
-        <div className="size-10 rounded-full bg-sidebar-primary/10 flex items-center justify-center text-sidebar-primary">
-          <Plus className="size-5" />
+          <div className="size-8 rounded-full bg-sidebar-primary/10 flex items-center justify-center text-sidebar-primary">
+            <Plus className="size-4" />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs font-semibold text-sidebar-foreground">
+              Upload local photos
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              Click or drag PNG, JPG, WEBP files
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col gap-0.5">
-          <p className="text-xs font-semibold text-sidebar-foreground">
-            Click or drag photos here
-          </p>
-          <p className="text-[10px] text-muted-foreground">
-            Supports PNG, JPG, WEBP, GIF
-          </p>
-        </div>
+
+        {/* Select from Media Pool Option */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPoolModalOpen(true)}
+          className="w-full text-xs font-semibold gap-1.5 h-9 rounded-xl border-sidebar-border bg-sidebar-accent/20 hover:bg-sidebar-accent text-sidebar-foreground"
+        >
+          <HardDrive className="size-3.5 text-primary" />
+          Select from Media Pool
+        </Button>
       </div>
+
+      <MediaPoolPickerModal
+        open={poolModalOpen}
+        onOpenChange={setPoolModalOpen}
+        onSelectMedia={(selectedImages) => {
+          handleImagesAdded(selectedImages);
+        }}
+      />
 
       {images.length > 0 && (
         <div className="flex flex-col gap-3">
