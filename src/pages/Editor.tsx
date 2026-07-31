@@ -1,9 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { InitialSetupModal } from "@/components/InitialSetupModal";
 import { useCollage } from "@/context/CollageContext";
 import { Settings } from "@/types/settings";
-
-import { useRef } from "react";
 import { CanvasControlsProvider } from "@/context/CanvasControlsContext";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Header } from "@/components/ui/header";
@@ -38,9 +36,9 @@ const Editor = () => {
     <CanvasControlsProvider>
       <SidebarProvider>
         <CollageSidebar collageRef={collageRef} />
-        <SidebarInset className="flex flex-col h-screen">
+        <SidebarInset className="flex flex-col h-screen overflow-hidden bg-background">
           <Header />
-          <main className="flex-1 flex flex-col overflow-hidden">
+          <main className="flex-1 flex flex-col overflow-hidden relative">
             <CanvasContainer collageRef={collageRef} />
             <CanvasControls />
           </main>

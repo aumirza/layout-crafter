@@ -19,6 +19,7 @@ import {
   PageSize,
 } from "@/types/collage";
 import { toast } from "@/hooks/use-toast";
+import { calculateEqualDivision } from "@/lib/equal-division";
 
 interface CollageContextType {
   collageState: CollageState;
@@ -46,6 +47,13 @@ interface CollageContextType {
   setUnit: (unit: MeasurementUnit) => void;
   createCustomPageSize: (width: number, height: number, margin: number) => void;
   createCustomLayout: (cellWidth: number, cellHeight: number) => void;
+  applyEqualDivision: (
+    columns: number,
+    rows: number,
+    customMargin?: number,
+    customRowGap?: number,
+    customColumnGap?: number
+  ) => void;
   // Gap management functions
   setRowGap: (gap: number) => void;
   setColumnGap: (gap: number) => void;
@@ -345,6 +353,73 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     toast({
       title: "Custom layout created",
       description: `Photo size set to ${cellWidth}×${cellHeight}mm`,
+    });
+  };
+
+  const applyEqualDivision = (
+    columns: number,
+    rows: number,
+    customMargin?: number,
+    customRowGap?: number,
+    customColumnGap?: number
+  ) => {
+    setCollageState((prev) => {
+      const margin = customMargin !== undefined ? customMargin : prev.pageSize.margin;
+      const rowGap = customRowGap !== undefined ? customRowGap : prev.rowGap;
+      const columnGap = customColumnGap !== undefined ? customColumnGap : prev.columnGap;
+
+      const division = calculateEqualDivision(
+        {
+          pageSize: { ...prev.pageSize, margin },
+          columns,
+          rows,
+          margin,
+          rowGap,
+          columnGap,
+        },
+        prev.selectedUnit
+      );
+
+      const customLayout: LayoutPreset = {
+        id: `equal_${columns}x${rows}_${Date.now()}`,
+        name: `Equal Division (${columns * rows} Pcs)`,
+        cellWidth: division.cellWidth,
+        cellHeight: division.cellHeight,
+        label: `Equal ${columns}x${rows} (${division.cellWidth}×${division.cellHeight}mm)`,
+      };
+
+      const newPageSize = {
+        ...prev.pageSize,
+        margin,
+      };
+
+      const newCells: CollageCell[][] = Array(rows)
+        .fill(null)
+        .map((_, rowIndex) =>
+          Array(columns)
+            .fill(null)
+            .map((_, colIndex) => ({
+              id: `cell-${rowIndex}-${colIndex}`,
+              imageId: null,
+              orientation: "auto" as ImageOrientation,
+            }))
+        );
+
+      toast({
+        title: "Equal Page Division Applied",
+        description: `${columns * rows} pieces (${division.cellWidth}×${division.cellHeight}mm per cell)`,
+      });
+
+      return {
+        ...prev,
+        pageSize: newPageSize,
+        layout: customLayout,
+        rows,
+        columns,
+        rowGap,
+        columnGap,
+        cells: newCells,
+      };
     });
   };
 
@@ -848,6 +923,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         updateLayout,
         createCustomPageSize: createCustomPageSizeImpl,
         createCustomLayout: createCustomLayoutImpl,
+        applyEqualDivision,
         setRowGap,
         setColumnGap,
         setGapsLinked,

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -26,9 +27,11 @@ import {
   type LayoutData,
 } from "@/components/ui/custom-preset-dialog";
 import { usePresetStore } from "@/stores/preset-store";
-import { layoutPresets } from "@/data/layout-presets";
-import { pageSizes } from "@/data/page-sizes";
 import { useCollage } from "@/context/CollageContext";
+import { TemplatePresetGrid } from "@/components/TemplatePresetGrid";
+import { PreConfiguredTemplate } from "@/data/template-presets";
+import { Layout, Sparkles, ArrowRight, CheckCircle2, Grid } from "lucide-react";
+import { EqualDivisionModal } from "@/components/EqualDivisionModal";
 
 interface InitialSetupModalProps {
   open: boolean;
@@ -50,29 +53,26 @@ export function InitialSetupModal({
   const [customDialogType, setCustomDialogType] = useState<
     "pageSize" | "layout"
   >("pageSize");
+  const [equalDivisionOpen, setEqualDivisionOpen] = useState(false);
 
   const { updateLayout, updatePageSize, collageState } = useCollage();
 
-  // Use page size and layout from the store/context
   const pageSize = collageState.pageSize;
   const layout = collageState.layout;
 
-  // Get presets and actions from the store
   const allPageSizes = usePresetStore((state) => state.getAllPageSizes)();
   const allLayouts = usePresetStore((state) => state.getAllLayouts)();
   const addCustomPageSize = usePresetStore((state) => state.addCustomPageSize);
   const addCustomLayout = usePresetStore((state) => state.addCustomLayout);
 
-  // Calculate the estimated number of cells
+  // Estimate photo cell capacity
   useEffect(() => {
     if (pageSize && layout) {
-      // Calculate usable area by removing margins
       const usableWidth = pageSize.width - pageSize.margin * 2;
       const usableHeight = pageSize.height - pageSize.margin * 2;
-      // Calculate cells based on layout dimensions
       const columns = Math.floor(usableWidth / layout.cellWidth);
       const rows = Math.floor(usableHeight / layout.cellHeight);
-      setCalculatedCells(rows * columns);
+      setCalculatedCells(Math.max(1, rows * columns));
     }
   }, [allPageSizes, allLayouts, pageSize, layout]);
 
@@ -84,6 +84,14 @@ export function InitialSetupModal({
       selectedUnit,
     });
     onClose();
+  };
+
+  const handleSelectTemplate = (tmpl: PreConfiguredTemplate) => {
+    const targetLayout = allLayouts.find((l) => l.id === tmpl.layoutId);
+    if (targetLayout) {
+      updateLayout(targetLayout);
+      setSpaceOptimization(tmpl.optimization);
+    }
   };
 
   const handleCreateCustomPageSize = () => {
@@ -99,7 +107,6 @@ export function InitialSetupModal({
   const handleSaveCustomPreset = (data: PageSizeData | LayoutData) => {
     if (customDialogType === "pageSize") {
       const pageSizeData = data as PageSizeData;
-      // Use the preset store to add a new custom page size
       const newCustomPageSize = addCustomPageSize({
         name: pageSizeData.name,
         label: pageSizeData.name,
@@ -107,110 +114,147 @@ export function InitialSetupModal({
         height: pageSizeData.height,
         margin: pageSizeData.margin,
       });
-      // Update the context with the newly created page size
       updatePageSize(newCustomPageSize);
     } else {
       const layoutData = data as LayoutData;
-      // Use the preset store to add a new custom layout
       const newCustomLayout = addCustomLayout({
         name: layoutData.name,
         label: layoutData.name,
         cellWidth: layoutData.cellWidth,
         cellHeight: layoutData.cellHeight,
       });
-      // Update the context with the newly created layout
       updateLayout(newCustomLayout);
     }
     setCustomDialogOpen(false);
   };
 
   const formatDimension = (value: number): string => {
-    return UnitConverter.formatDimension(value, selectedUnit, 2);
+    return UnitConverter.formatDimension(value, selectedUnit, 1);
   };
 
   return (
     <Dialog
       open={open}
-      onOpenChange={(open) => {
-        if (!open) onClose();
+      onOpenChange={(openState) => {
+        if (!openState) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle className="text-center text-xl">
-            Setup Your Collage
-          </DialogTitle>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-sm">
+              <Layout className="h-4 w-4" />
+            </div>
+            <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
+              Setup Layout Studio
+            </DialogTitle>
+            <Badge variant="outline" className="text-[10px] uppercase font-semibold text-primary border-primary/30 ml-auto">
+              Quick Setup
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Configure canvas paper dimensions and photo layouts or pick a pre-configured template.
+          </p>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="flex justify-between items-center mb-2">
-            <Label>Measurement Unit</Label>
-            <div className="flex items-center space-x-2">
-              <Select
-                value={selectedUnit}
-                onValueChange={(value: MeasurementUnit) =>
-                  setSelectedUnit(value)
+        <div className="space-y-4 py-2">
+          {/* Pre-configured templates selector */}
+          <div className="bg-muted/30 p-3.5 rounded-xl border border-border/50 space-y-2">
+            <TemplatePresetGrid
+              selectedLayoutId={layout?.id || ""}
+              onSelectTemplate={handleSelectTemplate}
+              compact
+            />
+          </div>
+
+          {/* Unit selector row */}
+          <div className="flex justify-between items-center bg-card p-3 rounded-xl border border-border/50">
+            <div>
+              <Label className="text-xs font-bold text-foreground">Measurement Unit</Label>
+              <p className="text-[11px] text-muted-foreground">Dimension display format</p>
+            </div>
+            <Select
+              value={selectedUnit}
+              onValueChange={(value: MeasurementUnit) => setSelectedUnit(value)}
+            >
+              <SelectTrigger className="w-[110px] h-8 text-xs font-medium">
+                <SelectValue placeholder="Unit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mm">mm (Millimeter)</SelectItem>
+                <SelectItem value="cm">cm (Centimeter)</SelectItem>
+                <SelectItem value="in">in (Inches)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Page size & Photo size grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-foreground">Paper Size</Label>
+              <PresetSelector
+                items={allPageSizes}
+                selected={pageSize}
+                onSelect={updatePageSize}
+                onCustomCreate={handleCreateCustomPageSize}
+                formatItemLabel={(size) =>
+                  `${size.label} (${formatDimension(size.width)}×${formatDimension(size.height)})`
                 }
-              >
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue placeholder="Unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mm">mm</SelectItem>
-                  <SelectItem value="cm">cm</SelectItem>
-                  <SelectItem value="in">inches</SelectItem>
-                </SelectContent>
-              </Select>
+                placeholder="Select page size"
+                customCreateLabel="Custom Size..."
+                className="w-full text-xs h-9"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-foreground">Photo Size</Label>
+              <PresetSelector
+                items={allLayouts}
+                selected={layout}
+                onSelect={updateLayout}
+                onCustomCreate={handleCreateCustomLayout}
+                formatItemLabel={(l) =>
+                  `${l.label} (${formatDimension(l.cellWidth)}×${formatDimension(l.cellHeight)})`
+                }
+                placeholder="Select photo size"
+                customCreateLabel="Custom Photo..."
+                className="w-full text-xs h-9"
+              />
             </div>
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="pageSize">Page Size</Label>
-            <PresetSelector
-              items={allPageSizes}
-              selected={pageSize}
-              onSelect={updatePageSize}
-              onCustomCreate={handleCreateCustomPageSize}
-              formatItemLabel={(size) =>
-                `${size.label} (${formatDimension(
-                  size.width
-                )}×${formatDimension(size.height)})`
-              }
-              placeholder="Select page size"
-              customCreateLabel="Create Custom Size..."
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="photoSize">Photo Size</Label>
-            <PresetSelector
-              items={allLayouts}
-              selected={layout}
-              onSelect={updateLayout}
-              onCustomCreate={handleCreateCustomLayout}
-              formatItemLabel={(layout) =>
-                `${layout.label} (${formatDimension(
-                  layout.cellWidth
-                )}×${formatDimension(layout.cellHeight)})`
-              }
-              placeholder="Select photo size"
-              customCreateLabel="Create Custom Photo Size..."
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
+          {/* Equal Page Division Banner Card */}
+          <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 p-3 rounded-xl border border-purple-500/20 flex items-center justify-between">
             <div>
-              <Label htmlFor="fitType">Photo Arrangement</Label>
-              <p className="text-xs text-muted-foreground mt-1">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Grid className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                Equal Page Division
+              </span>
+              <span className="text-[11px] text-muted-foreground block mt-0.5">
+                Auto-calculate cell size for 2, 4, 8, 16+ pieces
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEqualDivisionOpen(true)}
+              className="h-8 text-xs font-semibold border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 gap-1 rounded-lg shrink-0"
+            >
+              Calculate...
+            </Button>
+          </div>
+
+          {/* Space optimization switch */}
+          <div className="flex justify-between items-center bg-card p-3 rounded-xl border border-border/50">
+            <div>
+              <Label className="text-xs font-bold text-foreground">Space Optimization</Label>
+              <p className="text-[10px] text-muted-foreground">
                 {spaceOptimization === "loose"
-                  ? "Loose Fit: Consistent orientation (easier to cut)"
-                  : "Tight Fit: Mixed orientations (maximizes space)"}
+                  ? "Loose Fit: Consistent orientation"
+                  : "Tight Fit: Maximize photo count"}
               </p>
             </div>
             <div className="flex items-center space-x-2">
-              <Label htmlFor="fit-toggle" className="text-xs">
-                Loose
-              </Label>
               <Switch
                 id="fit-toggle"
                 checked={spaceOptimization === "tight"}
@@ -218,26 +262,30 @@ export function InitialSetupModal({
                   setSpaceOptimization(checked ? "tight" : "loose")
                 }
               />
-              <Label htmlFor="fit-toggle" className="text-xs">
-                Tight
-              </Label>
             </div>
           </div>
 
-          <div className="bg-muted/30 rounded-md p-3 mt-2">
-            <p className="text-sm font-medium">Estimated Layout</p>
-            <p className="text-sm">
-              This will create approximately <strong>{calculatedCells}</strong>{" "}
-              photo cells.
-            </p>
+          {/* Estimation status pill */}
+          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-3 rounded-xl flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span>Estimated Capacity:</span>
+            </div>
+            <span className="font-bold text-sm font-mono">{calculatedCells} Photo Cells</span>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
+        <DialogFooter className="gap-2 sm:gap-0 pt-2">
+          <Button variant="ghost" onClick={onClose} className="rounded-xl text-xs">
+            Skip Setup
           </Button>
-          <Button onClick={handleApply}>Start Creating</Button>
+          <Button
+            onClick={handleApply}
+            className="rounded-xl text-xs font-bold gap-1.5 shadow-md shadow-primary/20"
+          >
+            Start Creating in Studio
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
         </DialogFooter>
       </DialogContent>
 
@@ -246,6 +294,11 @@ export function InitialSetupModal({
         onClose={() => setCustomDialogOpen(false)}
         type={customDialogType}
         onSave={handleSaveCustomPreset}
+      />
+
+      <EqualDivisionModal
+        open={equalDivisionOpen}
+        onClose={() => setEqualDivisionOpen(false)}
       />
     </Dialog>
   );
