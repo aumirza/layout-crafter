@@ -250,7 +250,7 @@ export class CanvasRenderer {
     options: CanvasRendererOptions = {}
   ): Promise<HTMLCanvasElement> {
     const { dpi = 96, targetCanvas } = options;
-    const { pageSize, layout, cells, images, showCuttingMarkers, markerColor, rowGap, columnGap } =
+    const { pageSize, layout, cells, images, showCuttingMarkers, markerColor, markerSize, rowGap, columnGap } =
       collageState;
 
     const canvasDimensions = this.getCanvasDimensions(pageSize, dpi);
@@ -259,13 +259,9 @@ export class CanvasRenderer {
     const canvas = targetCanvas || document.createElement("canvas");
     canvas.width = Math.round(canvasDimensions.width);
     canvas.height = Math.round(canvasDimensions.height);
+    const ctx = canvas.getContext("2d")!;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      throw new Error("Failed to get 2D context from canvas");
-    }
-
-    // Fill background with white
+    // Fill canvas background with white
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -331,7 +327,8 @@ export class CanvasRenderer {
             ctx.save();
             ctx.strokeStyle = markerColor || "#9ca3af";
             ctx.lineWidth = Math.max(1, Math.round((0.5 / 96) * dpi));
-            const markerLen = Math.max(4, Math.round((2.5 / 25.4) * dpi)); // ~2.5mm line
+            const sizeMm = markerSize ?? 5;
+            const markerLen = Math.max(4, Math.round((sizeMm / 25.4) * dpi));
 
             ctx.beginPath();
             // Top-Left

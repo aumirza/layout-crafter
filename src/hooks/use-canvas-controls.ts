@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 interface CanvasControlsState {
   zoom: number;
   isDragging: boolean;
-  dragStart: { x: number; y: number };
   dragOffset: { x: number; y: number };
   isSpacePressed: boolean;
 }
@@ -21,9 +20,10 @@ export function useCanvasControls({ pageSize }: UseCanvasControlsProps) {
     if (!containerEl) return 100;
 
     const containerRect = containerEl.getBoundingClientRect();
+    if (containerRect.width <= 0 || containerRect.height <= 0) return 100;
 
     // Calculate actual screen DPI (default to 96 DPI if not available)
-    const dpi = window.devicePixelRatio * 96;
+    const dpi = (window.devicePixelRatio || 1) * 96;
 
     // Convert mm to pixels using screen DPI (1 inch = 25.4mm)
     const mmToPixels = (mm: number) => (mm / 25.4) * dpi;
@@ -32,41 +32,58 @@ export function useCanvasControls({ pageSize }: UseCanvasControlsProps) {
     const paperWidthPx = mmToPixels(pageSize.width);
     const paperHeightPx = mmToPixels(pageSize.height);
 
-    // Leave some padding around the paper (80px on each side)
-    const padding = 40;
-    const availableWidth = containerRect.width - padding;
-    const availableHeight = containerRect.height - padding;
+    // Padding around paper for viewing comfort (accounting for rulers & floating controls toolbar)
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+    const paddingX = isMobile ? 32 : 96;
+    const paddingY = isMobile ? 80 : 120;
+
+    const availableWidth = Math.max(40, containerRect.width - paddingX);
+    const availableHeight = Math.max(40, containerRect.height - paddingY);
 
     // Calculate zoom levels needed to fit width and height
     const zoomForWidth = (availableWidth / paperWidthPx) * 100;
     const zoomForHeight = (availableHeight / paperHeightPx) * 100;
 
-    // Use the smaller zoom to ensure both dimensions fit
+    // Use the smaller zoom to ensure both dimensions fit without overflowing
     const fitZoom = Math.min(zoomForWidth, zoomForHeight);
 
-    // Constrain between 20% and 100% zoom
-    return Math.max(20, Math.min(100, fitZoom));
+    // Constrain between 5% and 200% zoom to support small mobile screens & large paper formats
+    return Math.max(5, Math.min(200, fitZoom));
   }, [pageSize.width, pageSize.height]);
 
   const [zoom, setZoom] = useState(100);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isSpacePressed, setIsSpacePressed] = useState(false);
 
-  // Set initial zoom to fit the paper when container or page size changes
+  // Drag start position ref for smooth, un-throttled desktop mouse panning
+  const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Touch state ref for 1-finger pan & 2-finger pinch zoom
+  const touchStateRef = useRef<{
+    initialDist: number;
+    initialZoom: number;
+    lastTouchX: number;
+    lastTouchY: number;
+    isPinching: boolean;
+  } | null>(null);
+
+  // Set initial zoom to fit paper when container or page size changes
   useEffect(() => {
-    const fitZoom = calculateFitZoom();
-    setZoom(fitZoom);
-    setDragOffset({ x: 0, y: 0 }); // Reset drag offset when resizing
+    const timer = setTimeout(() => {
+      const fitZoom = calculateFitZoom();
+      setZoom(fitZoom);
+      setDragOffset({ x: 0, y: 0 });
+    }, 10);
+    return () => clearTimeout(timer);
   }, [calculateFitZoom, pageSize.width, pageSize.height]);
 
   const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 10, 200));
+    setZoom((prev) => Math.min(200, prev < 20 ? prev + 5 : prev + 10));
   };
 
   const handleZoomOut = () => {
-    setZoom((prev) => Math.max(prev - 10, 20));
+    setZoom((prev) => Math.max(5, prev <= 20 ? prev - 5 : prev - 10));
   };
 
   const handleResetZoom = () => {
@@ -80,202 +97,189 @@ export function useCanvasControls({ pageSize }: UseCanvasControlsProps) {
     setDragOffset({ x: 0, y: 0 });
   };
 
-  // Constrain drag offset when zoom changes to prevent canvas from going out of bounds
-  useEffect(() => {
-    const containerEl = canvasContainerRef.current;
-    if (!containerEl) return;
-
-    const containerRect = containerEl.getBoundingClientRect();
-
-    // Calculate actual screen DPI (default to 96 DPI if not available)
-    const dpi = window.devicePixelRatio * 96;
-
-    // Convert mm to pixels using screen DPI (1 inch = 25.4mm)
-    const mmToPixels = (mm: number) => (mm / 25.4) * dpi;
-
-    // Use actual page size converted to pixels with real DPI
-    const actualCanvasWidth = mmToPixels(pageSize.width) * (zoom / 100);
-    const actualCanvasHeight = mmToPixels(pageSize.height) * (zoom / 100);
-
-    // Ensure at least 150px of canvas remains visible on each side
-    const minVisibleArea = 150;
-    const maxOffsetX = Math.max(
-      0,
-      (actualCanvasWidth - containerRect.width) / 2 +
-        containerRect.width -
-        minVisibleArea
-    );
-    const maxOffsetY = Math.max(
-      0,
-      (actualCanvasHeight - containerRect.height) / 2 +
-        containerRect.height -
-        minVisibleArea
-    );
-    const minOffsetX = Math.min(
-      0,
-      -(actualCanvasWidth - containerRect.width) / 2 -
-        containerRect.width +
-        minVisibleArea
-    );
-    const minOffsetY = Math.min(
-      0,
-      -(actualCanvasHeight - containerRect.height) / 2 -
-        containerRect.height +
-        minVisibleArea
-    );
-
-    setDragOffset((prev) => ({
-      x: Math.max(minOffsetX, Math.min(maxOffsetX, prev.x)),
-      y: Math.max(minOffsetY, Math.min(maxOffsetY, prev.y)),
-    }));
-  }, [zoom, pageSize.width, pageSize.height]);
-
   const calculateConstraints = useCallback(() => {
     const containerEl = canvasContainerRef.current;
     if (!containerEl) return null;
 
     const containerRect = containerEl.getBoundingClientRect();
-
-    // Calculate actual screen DPI (default to 96 DPI if not available)
-    const dpi = window.devicePixelRatio * 96;
-
-    // Convert mm to pixels using screen DPI (1 inch = 25.4mm)
+    const dpi = (window.devicePixelRatio || 1) * 96;
     const mmToPixels = (mm: number) => (mm / 25.4) * dpi;
 
     const actualCanvasWidth = mmToPixels(pageSize.width) * (zoom / 100);
     const actualCanvasHeight = mmToPixels(pageSize.height) * (zoom / 100);
 
-    const minVisibleArea = 150;
-    const maxOffsetX = Math.max(
-      0,
-      (actualCanvasWidth - containerRect.width) / 2 +
-        containerRect.width -
-        minVisibleArea
-    );
-    const maxOffsetY = Math.max(
-      0,
-      (actualCanvasHeight - containerRect.height) / 2 +
-        containerRect.height -
-        minVisibleArea
-    );
-    const minOffsetX = Math.min(
-      0,
-      -(actualCanvasWidth - containerRect.width) / 2 -
-        containerRect.width +
-        minVisibleArea
-    );
-    const minOffsetY = Math.min(
-      0,
-      -(actualCanvasHeight - containerRect.height) / 2 -
-        containerRect.height +
-        minVisibleArea
-    );
+    const minVisibleArea = Math.min(80, Math.min(containerRect.width, containerRect.height) * 0.3);
+
+    const halfContainerW = containerRect.width / 2;
+    const halfContainerH = containerRect.height / 2;
+    const halfCanvasW = actualCanvasWidth / 2;
+    const halfCanvasH = actualCanvasHeight / 2;
+
+    const maxOffsetX = Math.max(0, halfCanvasW - minVisibleArea + halfContainerW);
+    const maxOffsetY = Math.max(0, halfCanvasH - minVisibleArea + halfContainerH);
+    const minOffsetX = -maxOffsetX;
+    const minOffsetY = -maxOffsetY;
 
     return { maxOffsetX, maxOffsetY, minOffsetX, minOffsetY };
   }, [zoom, pageSize.width, pageSize.height]);
 
+  // Constrain drag offset when zoom changes to prevent canvas from going out of bounds
+  useEffect(() => {
+    const constraints = calculateConstraints();
+    if (!constraints) return;
+
+    const { maxOffsetX, maxOffsetY, minOffsetX, minOffsetY } = constraints;
+    setDragOffset((prev) => ({
+      x: Math.max(minOffsetX, Math.min(maxOffsetX, prev.x)),
+      y: Math.max(minOffsetY, Math.min(maxOffsetY, prev.y)),
+    }));
+  }, [zoom, calculateConstraints]);
+
+  // Mouse Down handler for desktop canvas dragging
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Middle mouse button (scroll wheel press) or right-click with Ctrl/Shift or Space key
+    // Left-click (0), Middle-click (1), Right-click (2) with modifiers, or Space key + click
     if (
-      e.button === 1 || // Middle mouse button
-      (e.button === 2 && (e.ctrlKey || e.shiftKey)) || // Right-click with Ctrl or Shift
-      (e.button === 0 && isSpacePressed) // Left-click with space key
+      e.button === 0 ||
+      e.button === 1 ||
+      (e.button === 2 && (e.ctrlKey || e.shiftKey)) ||
+      isSpacePressed
     ) {
-      e.preventDefault();
+      if (e.button === 1 || (e.button === 2 && (e.ctrlKey || e.shiftKey)) || isSpacePressed) {
+        e.preventDefault();
+      }
       setIsDragging(true);
-      setDragStart({ x: e.clientX, y: e.clientY });
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
     }
   };
 
-  const calculatePanSpeed = useCallback(() => {
-    // Base speed factor
-    const baseSpeed = 0.5;
-
-    // Zoom factor: higher zoom = slower panning for precision
-    // At 100% zoom = 1.0x speed, at 200% zoom = 0.5x speed, at 50% zoom = 1.5x speed
-    const zoomFactor = Math.max(0.3, Math.min(2.0, 100 / zoom));
-
-    // Paper size factor: larger papers need faster panning
-    // Normalize based on A4 size (210x297mm)
-    const paperArea = pageSize.width * pageSize.height;
-    const a4Area = 210 * 297; // A4 area in mm²
-    const sizeFactor = Math.sqrt(paperArea / a4Area);
-
-    // Container size factor: larger viewports can handle faster panning
-    const containerEl = canvasContainerRef.current;
-    if (containerEl) {
-      const containerRect = containerEl.getBoundingClientRect();
-      const containerArea = containerRect.width * containerRect.height;
-      const baseContainerArea = 800 * 600; // Base container size
-      const containerFactor = Math.sqrt(containerArea / baseContainerArea);
-
-      return baseSpeed * zoomFactor * sizeFactor * containerFactor;
-    }
-
-    return baseSpeed * zoomFactor * sizeFactor;
-  }, [zoom, pageSize.width, pageSize.height]);
-
+  // Stable Mouse Move handler using dragStartRef to avoid event unbinding during drag
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (isDragging) {
-        const panSpeed = calculatePanSpeed();
-        const deltaX = (e.clientX - dragStart.x) * panSpeed;
-        const deltaY = (e.clientY - dragStart.y) * panSpeed;
+    (e: MouseEvent) => {
+      if (!isDragging) return;
+
+      const deltaX = e.clientX - dragStartRef.current.x;
+      const deltaY = e.clientY - dragStartRef.current.y;
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
+
+      setDragOffset((prev) => {
+        const constraints = calculateConstraints();
+        if (!constraints) return prev;
+
+        const { maxOffsetX, maxOffsetY, minOffsetX, minOffsetY } = constraints;
+        return {
+          x: Math.max(minOffsetX, Math.min(maxOffsetX, prev.x + deltaX)),
+          y: Math.max(minOffsetY, Math.min(maxOffsetY, prev.y + deltaY)),
+        };
+      });
+    },
+    [isDragging, calculateConstraints]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Touch controls for mobile (1-finger pan & 2-finger pinch zoom)
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        setIsDragging(true);
+        touchStateRef.current = {
+          initialDist: 0,
+          initialZoom: zoom,
+          lastTouchX: touch.clientX,
+          lastTouchY: touch.clientY,
+          isPinching: false,
+        };
+        dragStartRef.current = { x: touch.clientX, y: touch.clientY };
+      } else if (e.touches.length === 2) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        setIsDragging(true);
+        touchStateRef.current = {
+          initialDist: dist,
+          initialZoom: zoom,
+          lastTouchX: (t1.clientX + t2.clientX) / 2,
+          lastTouchY: (t1.clientY + t2.clientY) / 2,
+          isPinching: true,
+        };
+      }
+    },
+    [zoom]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchStateRef.current) return;
+
+      if (e.touches.length === 1 && !touchStateRef.current.isPinching) {
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchStateRef.current.lastTouchX;
+        const deltaY = touch.clientY - touchStateRef.current.lastTouchY;
+        touchStateRef.current.lastTouchX = touch.clientX;
+        touchStateRef.current.lastTouchY = touch.clientY;
 
         setDragOffset((prev) => {
           const constraints = calculateConstraints();
           if (!constraints) return prev;
-
-          const { maxOffsetX, maxOffsetY, minOffsetX, minOffsetY } =
-            constraints;
-
-          const newX = Math.max(
-            minOffsetX,
-            Math.min(maxOffsetX, prev.x + deltaX)
-          );
-          const newY = Math.max(
-            minOffsetY,
-            Math.min(maxOffsetY, prev.y + deltaY)
-          );
-
-          return { x: newX, y: newY };
+          const { maxOffsetX, maxOffsetY, minOffsetX, minOffsetY } = constraints;
+          return {
+            x: Math.max(minOffsetX, Math.min(maxOffsetX, prev.x + deltaX)),
+            y: Math.max(minOffsetY, Math.min(maxOffsetY, prev.y + deltaY)),
+          };
         });
+      } else if (e.touches.length === 2 && touchStateRef.current.isPinching) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const currentDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
 
-        setDragStart({ x: e.clientX, y: e.clientY });
+        if (touchStateRef.current.initialDist > 0) {
+          const scale = currentDist / touchStateRef.current.initialDist;
+          const targetZoom = Math.max(
+            5,
+            Math.min(200, Math.round(touchStateRef.current.initialZoom * scale))
+          );
+          setZoom(targetZoom);
+        }
+
+        const centerX = (t1.clientX + t2.clientX) / 2;
+        const centerY = (t1.clientY + t2.clientY) / 2;
+        const deltaX = centerX - touchStateRef.current.lastTouchX;
+        const deltaY = centerY - touchStateRef.current.lastTouchY;
+        touchStateRef.current.lastTouchX = centerX;
+        touchStateRef.current.lastTouchY = centerY;
+
+        setDragOffset((prev) => {
+          const constraints = calculateConstraints();
+          if (!constraints) return prev;
+          const { maxOffsetX, maxOffsetY, minOffsetX, minOffsetY } = constraints;
+          return {
+            x: Math.max(minOffsetX, Math.min(maxOffsetX, prev.x + deltaX)),
+            y: Math.max(minOffsetY, Math.min(maxOffsetY, prev.y + deltaY)),
+          };
+        });
       }
     },
-    [
-      dragStart.x,
-      dragStart.y,
-      isDragging,
-      calculateConstraints,
-      calculatePanSpeed,
-    ]
+    [calculateConstraints]
   );
 
-  const handleMouseUp = () => {
+  const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
-  };
+    touchStateRef.current = null;
+  }, []);
 
   const handleWheel = useCallback((e: WheelEvent) => {
-    if (e.ctrlKey) {
+    if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -10 : 10;
-      setZoom((prev) => Math.max(20, Math.min(200, prev + delta)));
+      const delta = e.deltaY > 0 ? -5 : 5;
+      setZoom((prev) => Math.max(5, Math.min(200, prev + delta)));
     }
   }, []);
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    // Prevent context menu when right-clicking with modifier keys for panning
-    if (e.ctrlKey || e.shiftKey) {
-      e.preventDefault();
-    }
-  };
-
   const handleContextMenuNative = useCallback((e: Event) => {
     const mouseEvent = e as MouseEvent;
-    // Prevent context menu when right-clicking with modifier keys for panning
     if (mouseEvent.ctrlKey || mouseEvent.shiftKey) {
       e.preventDefault();
     }
@@ -300,55 +304,46 @@ export function useCanvasControls({ pageSize }: UseCanvasControlsProps) {
     [isDragging]
   );
 
-  // Apply mouse events only when the user is actively dragging
+  // Global mousemove & mouseup listeners attached while dragging desktop mouse
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener(
-        "mousemove",
-        handleMouseMove as unknown as EventListener
-      );
-      document.addEventListener("mouseup", handleMouseUp);
+      const onGlobalMouseMove = (e: MouseEvent) => handleMouseMove(e);
+      const onGlobalMouseUp = () => handleMouseUp();
+
+      window.addEventListener("mousemove", onGlobalMouseMove);
+      window.addEventListener("mouseup", onGlobalMouseUp);
+
+      return () => {
+        window.removeEventListener("mousemove", onGlobalMouseMove);
+        window.removeEventListener("mouseup", onGlobalMouseUp);
+      };
     }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
-    return () => {
-      document.removeEventListener(
-        "mousemove",
-        handleMouseMove as unknown as EventListener
-      );
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging, dragStart, handleMouseMove]);
-
-  // Add wheel event listener for zoom control
+  // Wheel & touch scroll prevention
   useEffect(() => {
     const canvasContainer = canvasContainerRef.current;
     if (canvasContainer) {
-      canvasContainer.addEventListener("wheel", handleWheel, {
-        passive: false,
-      });
+      canvasContainer.addEventListener("wheel", handleWheel, { passive: false });
+      canvasContainer.addEventListener("contextmenu", handleContextMenuNative);
+
+      const preventTouchScroll = (e: TouchEvent) => {
+        if (e.touches.length > 1) {
+          if (e.cancelable) e.preventDefault();
+        }
+      };
+
+      canvasContainer.addEventListener("touchmove", preventTouchScroll, { passive: false });
 
       return () => {
         canvasContainer.removeEventListener("wheel", handleWheel);
+        canvasContainer.removeEventListener("contextmenu", handleContextMenuNative);
+        canvasContainer.removeEventListener("touchmove", preventTouchScroll);
       };
     }
-  }, [handleWheel]);
+  }, [handleWheel, handleContextMenuNative]);
 
-  // Add context menu event listener
-  useEffect(() => {
-    const canvasContainer = canvasContainerRef.current;
-    if (canvasContainer) {
-      canvasContainer.addEventListener("contextmenu", handleContextMenuNative);
-
-      return () => {
-        canvasContainer.removeEventListener(
-          "contextmenu",
-          handleContextMenuNative
-        );
-      };
-    }
-  }, [handleContextMenuNative]);
-
-  // Add keyboard event listeners for space key panning
+  // Keyboard listeners for space-drag
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
@@ -370,9 +365,11 @@ export function useCanvasControls({ pageSize }: UseCanvasControlsProps) {
     handleResetZoom,
     handleFitToContainer,
     handleMouseDown,
-    handleMouseMove,
+    handleMouseMove: handleMouseMove as unknown as (e: React.MouseEvent) => void,
     handleMouseUp,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
     handleWheel,
-    handleContextMenu,
   };
 }

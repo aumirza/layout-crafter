@@ -21,6 +21,9 @@ export function CanvasContainer({ collageRef, selectedCellId, onSelectCell }: Ca
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
     handleWheel,
   } = useCanvasControlsContext();
 
@@ -89,10 +92,14 @@ export function CanvasContainer({ collageRef, selectedCellId, onSelectCell }: Ca
         {/* MAIN CANVAS VIEWPORT */}
         <div
           ref={canvasContainerRef}
-          className="flex-1 overflow-auto p-8 sm:p-12 flex justify-center items-center active:cursor-grabbing relative select-none bg-background bg-[radial-gradient(var(--color-border)_1px,transparent_1px)] bg-size-[24px_24px]"
+          className="flex-1 overflow-auto p-3 sm:p-12 flex justify-center items-center active:cursor-grabbing relative select-none bg-background bg-[radial-gradient(var(--color-border)_1px,transparent_1px)] bg-size-[24px_24px] touch-none"
           onMouseDown={handleMouseDown}
           onMouseMove={onContainerMouseMove}
           onMouseUp={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
           onContextMenu={(e) => e.preventDefault()}
         >
           <div

@@ -60,6 +60,7 @@ export interface CollageState {
   spaceOptimization: SpaceOptimization;
   showCuttingMarkers: boolean;
   markerColor: string;
+  markerSize: number; // in mm, default: 5
   selectedUnit: MeasurementUnit;
   rowGap: number; // in mm, default: 2
   columnGap: number; // in mm, default: 2

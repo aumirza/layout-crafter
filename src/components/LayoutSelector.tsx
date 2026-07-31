@@ -38,12 +38,13 @@ export function LayoutSelector() {
 
   const [isCustomDialogOpen, setIsCustomDialogOpen] = useState(false);
   const [isEqualDivisionOpen, setIsEqualDivisionOpen] = useState(false);
-  const presetStore = usePresetStore();
-  const [allLayouts, setAllLayouts] = useState<LayoutPreset[]>(layoutPresets);
+  const addCustomLayout = usePresetStore((state) => state.addCustomLayout);
+  const customLayouts = usePresetStore((state) => state.customLayouts);
+  const defaultLayouts = usePresetStore((state) => state.defaultLayouts);
 
-  useEffect(() => {
-    setAllLayouts(presetStore.getAllLayouts());
-  }, [presetStore]);
+  const allLayouts = useMemo(() => {
+    return [...(defaultLayouts.length > 0 ? defaultLayouts : layoutPresets), ...customLayouts];
+  }, [defaultLayouts, customLayouts]);
 
   const formatDimension = (value: number): string => {
     return UnitConverter.formatDimension(value, selectedUnit, 1);
@@ -53,15 +54,13 @@ export function LayoutSelector() {
     createCustomLayout(data.cellWidth, data.cellHeight);
 
     if (data.saveAsPreset) {
-      presetStore.addCustomLayout({
+      addCustomLayout({
         name: data.name,
         id: `custom_${Date.now()}`,
         cellWidth: data.cellWidth,
         cellHeight: data.cellHeight,
         label: data.name,
       });
-
-      setAllLayouts(presetStore.getAllLayouts());
     }
   };
 

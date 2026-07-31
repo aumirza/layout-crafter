@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Link, Unlink } from "lucide-react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Link2, Link2Off } from "lucide-react";
 import { MeasurementUnit } from "@/types/collage";
 import { UnitConverter } from "@/lib/unit-converter";
 
@@ -25,131 +25,145 @@ export function GapControls({
   onLinkedChange,
   unit,
 }: GapControlsProps) {
-  // Convert gap values to display unit
-  const [displayRowGap, setDisplayRowGap] = useState(
-    UnitConverter.convertFromMm(rowGap, unit).toString()
-  );
-  const [displayColumnGap, setDisplayColumnGap] = useState(
-    UnitConverter.convertFromMm(columnGap, unit).toString()
-  );
+  const formattedRow = UnitConverter.formatDimension(rowGap, unit, 1);
+  const formattedCol = UnitConverter.formatDimension(columnGap, unit, 1);
 
-  // Update display values when props change
-  useEffect(() => {
-    setDisplayRowGap(UnitConverter.convertFromMm(rowGap, unit).toString());
-  }, [rowGap, unit]);
-
-  useEffect(() => {
-    setDisplayColumnGap(UnitConverter.convertFromMm(columnGap, unit).toString());
-  }, [columnGap, unit]);
-
-  const handleRowGapChange = (value: string) => {
-    setDisplayRowGap(value);
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue >= 0 && numValue <= 50) {
-      const mmValue = UnitConverter.convertToMm(numValue, unit);
-      onRowGapChange(mmValue);
+  const handleRowSliderChange = (vals: number[]) => {
+    const val = vals[0];
+    if (typeof val === "number") {
+      onRowGapChange(val);
       if (gapsLinked) {
-        onColumnGapChange(mmValue);
+        onColumnGapChange(val);
       }
     }
   };
 
-  const handleColumnGapChange = (value: string) => {
-    setDisplayColumnGap(value);
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue >= 0 && numValue <= 50) {
-      const mmValue = UnitConverter.convertToMm(numValue, unit);
-      onColumnGapChange(mmValue);
+  const handleColumnSliderChange = (vals: number[]) => {
+    const val = vals[0];
+    if (typeof val === "number") {
+      onColumnGapChange(val);
       if (gapsLinked) {
-        onRowGapChange(mmValue);
+        onRowGapChange(val);
       }
     }
   };
 
-  const handleLinkToggle = () => {
-    onLinkedChange(!gapsLinked);
-  };
-
-  const getUnitLabel = () => {
-    switch (unit) {
-      case "mm":
-        return "mm";
-      case "cm":
-        return "cm";
-      case "in":
-        return "in";
-      default:
-        return "mm";
-    }
+  const setBothGaps = (valMm: number) => {
+    onRowGapChange(valMm);
+    onColumnGapChange(valMm);
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5 bg-card/60 border border-border/60 p-3.5 rounded-xl shadow-2xs">
       <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium">Gap Spacing</Label>
+        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+          Grid Spacing & Gaps
+        </span>
         <Button
           variant="outline"
           size="sm"
-          onClick={handleLinkToggle}
-          className="h-8 w-8 p-0"
-          title={gapsLinked ? "Unlink gaps" : "Link gaps"}
+          onClick={() => onLinkedChange(!gapsLinked)}
+          className="h-7 px-2 text-[11px] font-semibold gap-1.5 border-border/60"
+          title={gapsLinked ? "Unlink row & column gaps" : "Link row & column gaps"}
         >
           {gapsLinked ? (
-            <Link className="h-4 w-4" />
+            <>
+              <Link2 className="size-3.5 text-primary" />
+              <span>Linked</span>
+            </>
           ) : (
-            <Unlink className="h-4 w-4" />
+            <>
+              <Link2Off className="size-3.5 text-muted-foreground" />
+              <span>Unlinked</span>
+            </>
           )}
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="row-gap" className="text-xs text-muted-foreground">
-            Row Gap
-          </Label>
-          <div className="relative">
-            <Input
-              id="row-gap"
-              type="number"
-              value={displayRowGap}
-              onChange={(e) => handleRowGapChange(e.target.value)}
-              min="0"
-              step="0.1"
-              className="pr-8"
+      {gapsLinked ? (
+        <div className="space-y-2 bg-muted/20 p-2.5 rounded-lg border border-border/40">
+          <div className="flex items-center justify-between text-xs">
+            <Label className="text-[11px] font-medium text-foreground">Gap Size</Label>
+            <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0.5">
+              {formattedRow} {unit}
+            </Badge>
+          </div>
+          <Slider
+            value={[rowGap]}
+            onValueChange={handleRowSliderChange}
+            min={0}
+            max={30}
+            step={0.5}
+            className="py-1"
+          />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="space-y-2 bg-muted/20 p-2.5 rounded-lg border border-border/40">
+            <div className="flex items-center justify-between text-xs">
+              <Label className="text-[11px] font-medium text-foreground">Row Gap</Label>
+              <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0.5">
+                {formattedRow} {unit}
+              </Badge>
+            </div>
+            <Slider
+              value={[rowGap]}
+              onValueChange={handleRowSliderChange}
+              min={0}
+              max={30}
+              step={0.5}
+              className="py-1"
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-              {getUnitLabel()}
-            </span>
+          </div>
+
+          <div className="space-y-2 bg-muted/20 p-2.5 rounded-lg border border-border/40">
+            <div className="flex items-center justify-between text-xs">
+              <Label className="text-[11px] font-medium text-foreground">Column Gap</Label>
+              <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0.5">
+                {formattedCol} {unit}
+              </Badge>
+            </div>
+            <Slider
+              value={[columnGap]}
+              onValueChange={handleColumnSliderChange}
+              min={0}
+              max={30}
+              step={0.5}
+              className="py-1"
+            />
           </div>
         </div>
+      )}
 
-        <div className="space-y-2">
-          <Label htmlFor="column-gap" className="text-xs text-muted-foreground">
-            Column Gap
-          </Label>
-          <div className="relative">
-            <Input
-              id="column-gap"
-              type="number"
-              value={displayColumnGap}
-              onChange={(e) => handleColumnGapChange(e.target.value)}
-              min="0"
-              step="0.1"
-              className="pr-8"
-              disabled={gapsLinked}
-            />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-              {getUnitLabel()}
-            </span>
-          </div>
+      <div className="flex items-center justify-between pt-0.5">
+        <span className="text-[10px] text-muted-foreground font-mono">Quick:</span>
+        <div className="flex items-center gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setBothGaps(0)}
+            className="h-5 px-2 text-[10px] font-mono rounded border-border/60"
+          >
+            0mm (Seamless)
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setBothGaps(2)}
+            className="h-5 px-2 text-[10px] font-mono rounded border-border/60"
+          >
+            2mm (Standard)
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setBothGaps(5)}
+            className="h-5 px-2 text-[10px] font-mono rounded border-border/60"
+          >
+            5mm (Wide)
+          </Button>
         </div>
       </div>
-
-      {gapsLinked && (
-        <p className="text-xs text-muted-foreground">
-          Gaps are linked - changing one will update both
-        </p>
-      )}
     </div>
   );
 }

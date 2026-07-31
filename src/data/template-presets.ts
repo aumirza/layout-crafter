@@ -12,6 +12,15 @@ export interface PreConfiguredTemplate {
 
 export const PRECONFIGURED_TEMPLATES: PreConfiguredTemplate[] = [
   {
+    id: "passport-grid",
+    name: "Passport Grid",
+    desc: "Standard 35×45mm photos",
+    layoutId: "passport_photo",
+    optimization: "tight",
+    icon: Maximize2,
+    badge: "Essential",
+  },
+  {
     id: "classic-2x2",
     name: "2×2 Square Grid",
     desc: "Equal 2x2 photo tiles",
@@ -19,15 +28,6 @@ export const PRECONFIGURED_TEMPLATES: PreConfiguredTemplate[] = [
     optimization: "tight",
     icon: LayoutGrid,
     badge: "Popular",
-  },
-  {
-    id: "photo-strip",
-    name: "Photo Strip",
-    desc: "Vertical stack layout",
-    layoutId: "1x1.5_labels",
-    optimization: "tight",
-    icon: Grid,
-    badge: "Trending",
   },
   {
     id: "wallet-grid",
@@ -38,19 +38,11 @@ export const PRECONFIGURED_TEMPLATES: PreConfiguredTemplate[] = [
     icon: Layers,
   },
   {
-    id: "passport-grid",
-    name: "Passport Grid",
-    desc: "Standard 35×45mm photos",
-    layoutId: "passport_photo",
-    optimization: "tight",
-    icon: Maximize2,
-  },
-  {
     id: "standard-4x6",
     name: "4×6\" Print",
     desc: "Standard photo print",
     layoutId: "4x6_photo",
     optimization: "loose",
-    icon: LayoutGrid,
+    icon: Grid,
   },
 ];

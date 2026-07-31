@@ -43,6 +43,7 @@ interface CollageContextType {
   setSpaceOptimization: (value: SpaceOptimization) => void;
   toggleCuttingMarkers: (show: boolean) => void;
   setMarkerColor: (color: string) => void;
+  setMarkerSize: (size: number) => void;
   resetCanvas: () => void;
   clearAll: () => void;
   setUnit: (unit: MeasurementUnit) => void;
@@ -171,6 +172,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     spaceOptimization: "loose",
     showCuttingMarkers: getDefaultShowCuttingMarkers(),
     markerColor: "#9ca3af",
+    markerSize: 5, // Default: 5mm
     selectedUnit: getDefaultUnit(),
     rowGap: 2, // Default: 2mm
     columnGap: 2, // Default: 2mm
@@ -729,6 +731,13 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const setMarkerSize = (size: number) => {
+    setCollageState((prev) => ({
+      ...prev,
+      markerSize: size,
+    }));
+  };
+
   const resetCanvas = () => {
     setCollageState((prev) => {
       // Keep the images but reset all cells
@@ -798,32 +807,119 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  // Gap management functions
-  const setRowGap = (gap: number) => {
-    setCollageState((prev) => ({
+  // Helper to recalculate grid layout and cell matrix when gaps change
+  const recalculateStateWithGaps = (
+    prev: CollageState,
+    rGap: number,
+    cGap: number,
+    gapsLinked: boolean
+  ): CollageState => {
+    // 1. Equal division layout
+    if (prev.layout.id.startsWith("equal_")) {
+      const division = calculateEqualDivision(
+        {
+          pageSize: prev.pageSize,
+          columns: prev.columns,
+          rows: prev.rows,
+          margin: prev.pageSize.margin,
+          rowGap: rGap,
+          columnGap: cGap,
+        },
+        prev.selectedUnit
+      );
+
+      const updatedLayout: LayoutPreset = {
+        ...prev.layout,
+        cellWidth: division.cellWidth,
+        cellHeight: division.cellHeight,
+        label: `Equal ${prev.columns}x${prev.rows} (${division.cellWidth}×${division.cellHeight}mm)`,
+      };
+
+      return {
+        ...prev,
+        rowGap: rGap,
+        columnGap: cGap,
+        gapsLinked,
+        layout: updatedLayout,
+      };
+    }
+
+    // 2. Standard grid layout
+    const layoutCalc = calculateGridDimensions(
+      prev.pageSize.width,
+      prev.pageSize.height,
+      prev.layout.cellWidth,
+      prev.layout.cellHeight,
+      prev.pageSize.margin,
+      prev.spaceOptimization,
+      rGap,
+      cGap
+    );
+
+    const newRows = layoutCalc.rows;
+    const newCols = layoutCalc.columns;
+
+    let newCells = prev.cells;
+    if (newRows !== prev.rows || newCols !== prev.columns || !prev.cells.length) {
+      newCells = Array(newRows)
+        .fill(null)
+        .map((_, rowIndex) =>
+          Array(newCols)
+            .fill(null)
+            .map((_, colIndex) => {
+              const existingCell = prev.cells[rowIndex]?.[colIndex];
+              return {
+                id: `cell-${rowIndex}-${colIndex}`,
+                imageId: existingCell?.imageId || null,
+                orientation: existingCell?.orientation || ("auto" as ImageOrientation),
+              };
+            })
+        );
+
+      if (prev.images.length === 1 && prev.images[0].id) {
+        newCells = newCells.map((row) =>
+          row.map((cell) => ({
+            ...cell,
+            imageId: prev.images[0].id,
+            orientation: prev.images[0].orientation || ("auto" as ImageOrientation),
+          }))
+        );
+      }
+    }
+
+    return {
       ...prev,
-      rowGap: gap,
-      // If gaps are linked, also update column gap
-      columnGap: prev.gapsLinked ? gap : prev.columnGap,
-    }));
+      rowGap: rGap,
+      columnGap: cGap,
+      gapsLinked,
+      rows: newRows,
+      columns: newCols,
+      cells: newCells,
+    };
+  };
+
+  // Gap management functions with automatic layout recalculation
+  const setRowGap = (gap: number) => {
+    setCollageState((prev) => {
+      const rGap = Math.max(0, gap);
+      const cGap = prev.gapsLinked ? rGap : prev.columnGap;
+      return recalculateStateWithGaps(prev, rGap, cGap, prev.gapsLinked);
+    });
   };
 
   const setColumnGap = (gap: number) => {
-    setCollageState((prev) => ({
-      ...prev,
-      columnGap: gap,
-      // If gaps are linked, also update row gap
-      rowGap: prev.gapsLinked ? gap : prev.rowGap,
-    }));
+    setCollageState((prev) => {
+      const cGap = Math.max(0, gap);
+      const rGap = prev.gapsLinked ? cGap : prev.rowGap;
+      return recalculateStateWithGaps(prev, rGap, cGap, prev.gapsLinked);
+    });
   };
 
   const setGapsLinked = (linked: boolean) => {
-    setCollageState((prev) => ({
-      ...prev,
-      gapsLinked: linked,
-      // If linking is enabled, sync column gap to row gap
-      columnGap: linked ? prev.rowGap : prev.columnGap,
-    }));
+    setCollageState((prev) => {
+      const cGap = linked ? prev.rowGap : prev.columnGap;
+      return recalculateStateWithGaps(prev, prev.rowGap, cGap, linked);
+    });
   };
 
   const updateGap = (type: 'row' | 'column', value: number) => {
@@ -1056,6 +1152,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         setSpaceOptimization,
         toggleCuttingMarkers,
         setMarkerColor,
+        setMarkerSize,
         resetCanvas,
         clearAll,
         setUnit,
