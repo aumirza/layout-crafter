@@ -34,48 +34,6 @@ import {
   Square,
   Sparkle,
 } from "lucide-react";
-import { CollageCanvas } from "@/components/CollageCanvas";
-import { CollageState } from "@/types/collage";
-
-// Authentic default CollageState for Hero Live Canvas Preview
-const HERO_DEMO_COLLAGE: CollageState = {
-  pageSize: {
-    id: "a4",
-    name: "A4 Standard",
-    width: 210,
-    height: 297,
-    label: "A4 (210 × 297 mm)",
-    margin: 10,
-  },
-  layout: {
-    id: "grid-4",
-    name: "2×2 Grid",
-    cellWidth: 91,
-    cellHeight: 134.5,
-    label: "2×2 Equal",
-  },
-  images: [], // Clean empty placeholders as requested
-  cells: [
-    [
-      { id: "cell-0-0", imageId: null, orientation: "auto" },
-      { id: "cell-0-1", imageId: null, orientation: "auto" },
-    ],
-    [
-      { id: "cell-1-0", imageId: null, orientation: "auto" },
-      { id: "cell-1-1", imageId: null, orientation: "auto" },
-    ],
-  ],
-  rows: 2,
-  columns: 2,
-  spaceOptimization: "loose",
-  showCuttingMarkers: true,
-  markerColor: "#64748b",
-  markerSize: 5,
-  selectedUnit: "mm",
-  rowGap: 8,
-  columnGap: 8,
-  gapsLinked: true,
-};
 
 export default function LandingPage() {
   const { theme, toggleTheme } = useTheme();
@@ -198,136 +156,14 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* AUTHENTIC EDITOR UI SHOWCASE (REAL CANVAS PREVIEW) */}
+          {/* EDITOR UI SHOWCASE (SCREENSHOT PREVIEW) */}
           <div id="demo-preview" className="mt-12 md:mt-16 max-w-5xl mx-auto">
-            <div className="rounded-xl border border-border bg-card shadow-2xl overflow-hidden">
-              {/* Studio Window Title Bar */}
-              <div className="h-10 bg-muted/80 border-b border-border px-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                  <span className="ml-2 text-xs font-semibold text-foreground/80 hidden sm:inline-block">
-                    Layout Studio • Live Editor Canvas
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[11px] font-mono bg-background text-foreground border-border px-2.5 py-0.5">
-                    <span className="text-primary font-bold mr-1">A4</span> 210 × 297 mm
-                  </Badge>
-                  <Badge className="text-[10px] font-mono bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                    300 DPI READY
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Editor Workspace Shell */}
-              <div className="grid grid-cols-1 md:grid-cols-12 min-h-[460px] bg-slate-950 text-slate-100">
-                {/* Left Mini Sidebar */}
-                <div className="hidden md:flex md:col-span-3 border-r border-slate-800 bg-slate-900/90 p-4 flex-col justify-between text-xs">
-                  <div className="space-y-4">
-                    <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
-                      <SlidersHorizontal className="h-3.5 w-3.5 text-indigo-400" />
-                      Studio Controls
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-300">Page Presets</label>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between px-2.5 py-1.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-medium">
-                          <span className="flex items-center gap-1.5">
-                            <FileText className="h-3.5 w-3.5" /> A4 Paper
-                          </span>
-                          <span className="text-[10px] font-mono">210×297mm</span>
-                        </div>
-                        <div className="flex items-center justify-between px-2.5 py-1.5 rounded bg-slate-800/60 text-slate-400 text-xs hover:text-slate-200">
-                          <span className="flex items-center gap-1.5">
-                            <Square className="h-3.5 w-3.5" /> 4×6" Print
-                          </span>
-                          <span className="text-[10px] font-mono">102×152mm</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 pt-2 border-t border-slate-800">
-                      <label className="text-xs font-medium text-slate-300">Grid Division</label>
-                      <div className="grid grid-cols-2 gap-1.5 text-center">
-                        <div className="p-2 rounded bg-indigo-600 text-white font-medium text-xs">
-                          2 × 2 Grid
-                        </div>
-                        <div className="p-2 rounded bg-slate-800 text-slate-400 font-medium text-xs">
-                          3 × 3 Grid
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 pt-2 border-t border-slate-800">
-                      <div className="flex justify-between text-slate-300 text-xs">
-                        <span>Cut Markers</span>
-                        <span className="text-emerald-400 font-mono font-semibold">Enabled</span>
-                      </div>
-                      <div className="flex justify-between text-slate-300 text-xs">
-                        <span>Margin / Gaps</span>
-                        <span className="text-slate-400 font-mono">8 mm</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Link to="/library" className="pt-4 border-t border-slate-800">
-                    <Button size="sm" className="w-full text-xs font-semibold gap-1 bg-indigo-600 hover:bg-indigo-500 text-white">
-                      Open Studio Library
-                      <ArrowRight className="h-3 w-3" />
-                    </Button>
-                  </Link>
-                </div>
-
-                {/* Right Workspace with Measurement Rulers & Real Canvas */}
-                <div className="md:col-span-9 flex flex-col relative overflow-hidden bg-slate-950">
-                  {/* Top Measurement Ruler */}
-                  <div className="h-6 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-8 text-[9px] font-mono text-slate-400 select-none">
-                    <span>0 mm</span>
-                    <span>52 mm</span>
-                    <span>105 mm</span>
-                    <span>157 mm</span>
-                    <span>210 mm</span>
-                  </div>
-
-                  {/* Canvas Viewport Area */}
-                  <div className="flex-1 flex relative items-center justify-center p-6 sm:p-8 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:20px_20px]">
-                    {/* Left Ruler */}
-                    <div className="absolute left-0 top-0 bottom-0 w-6 bg-slate-900 border-r border-slate-800 flex flex-col justify-between py-6 text-[9px] font-mono text-slate-400 items-center select-none">
-                      <span>0</span>
-                      <span>148</span>
-                      <span>297</span>
-                    </div>
-
-                    {/* Real Collage Canvas Component Container */}
-                    <div className="shadow-2xl rounded border border-slate-800 bg-white p-2 max-w-[280px] sm:max-w-[320px] transition-transform">
-                      <CollageCanvas
-                        collageState={HERO_DEMO_COLLAGE}
-                        onAssignImage={() => {}}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Bottom Viewport Control Strip */}
-                  <div className="h-8 bg-slate-900 border-t border-slate-800 px-4 flex items-center justify-between text-[11px] font-mono text-slate-400">
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1 text-slate-300">
-                        <Ruler className="h-3 w-3 text-indigo-400" /> mm
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Scissors className="h-3 w-3 text-slate-400" /> Markers: On
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-300">Zoom: 100%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="rounded-xl border border-border bg-card shadow-2xl overflow-hidden group relative">
+              <img
+                src="/screenshots/layout-crafter-v2.jpeg"
+                alt="Layout Crafter Studio Workspace Preview"
+                className="w-full h-auto object-cover rounded-xl shadow-2xl transition-transform duration-500 group-hover:scale-[1.005]"
+              />
             </div>
           </div>
         </section>
