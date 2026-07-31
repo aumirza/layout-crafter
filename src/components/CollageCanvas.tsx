@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { CollageState, ImageFitOption, CollageCell } from "@/types/collage";
 import { UnitConverter } from "@/lib/unit-converter";
@@ -30,6 +30,8 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
     } | null>(null);
     const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
     // Calculate actual screen DPI (default to 96 DPI if not available)
     const dpi = window.devicePixelRatio * 96;
 
@@ -40,6 +42,16 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
       pageSize.margin,
       dpi
     );
+
+    // Render matrix-transformed preview onto high-res canvas
+    useEffect(() => {
+      if (canvasRef.current) {
+        CanvasRenderer.renderToCanvas(collageState, {
+          dpi,
+          targetCanvas: canvasRef.current,
+        });
+      }
+    }, [collageState, dpi]);
 
     // Reset the selected image when the images change
     useEffect(() => {
@@ -67,24 +79,6 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
       setActiveCell(null);
     };
 
-    // Get object-fit style based on image fit option
-    const getObjectFitStyle = (imageId: string | null): ImageFitOption => {
-      return CanvasRenderer.getImageFitFromCollageImage(images, imageId);
-    };
-
-    // Get transform and container styles based on cell orientation
-    const getOrientationStyles = (
-      cell: CollageCell,
-      objectFit: ImageFitOption
-    ) => {
-      return CanvasRenderer.getOrientationStyles(
-        cell,
-        objectFit,
-        cellDimensions.cellWidth,
-        cellDimensions.cellHeight
-      );
-    };
-
     // Format dimensions according to selected unit
     const formatDimension = (value: number): string => {
       return UnitConverter.formatDimension(value, selectedUnit, 1);
@@ -101,154 +95,57 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
               height: `${canvasDimensions.height}px`,
               position: "relative",
               overflow: "hidden",
-              padding: `${cellDimensions.margin}px`,
             }}
           >
-            {/* Render the grid of cells */}
-            {cells.map((row, rowIndex) =>
-              row.map((cell, colIndex) => {
-                const hasImage = cell.imageId !== null;
-                const image = images.find((img) => img.id === cell.imageId);
-                const objectFit = getObjectFitStyle(cell.imageId);
-                const cellPosition = CanvasRenderer.getCellPosition(
-                  rowIndex,
-                  colIndex,
-                  cellDimensions,
-                  rowGap,
-                  columnGap,
-                  dpi
-                );
+            {/* Native Canvas preview driven by matrix transformation stack */}
+            <canvas
+              ref={canvasRef}
+              style={{
+                width: `${canvasDimensions.width}px`,
+                height: `${canvasDimensions.height}px`,
+                display: "block",
+              }}
+            />
 
-                return (
-                  <div
-                    key={cell.id}
-                    className={cn(
-                      "absolute overflow-hidden",
-                      !hasImage && "bg-muted/30",
-                      hasImage && "bg-center"
-                    )}
-                    style={{
-                      width: `${cellPosition.width}px`,
-                      height: `${cellPosition.height}px`,
-                      left: `${cellPosition.left}px`,
-                      top: `${cellPosition.top}px`,
-                    }}
-                    onClick={() => handleCellClick(rowIndex, colIndex)}
-                  >
-                    {hasImage && image ? (
-                      <>
-                        <img
-                          src={image.src}
-                          alt={image.name}
-                          className={cn(
-                            "w-full h-full cursor-pointer",
-                            CanvasRenderer.getObjectFitClass(objectFit)
-                          )}
-                          style={{
-                            objectPosition: "center center",
-                            objectFit:
-                              objectFit === "original" ? "none" : objectFit,
-                            ...getOrientationStyles(cell, objectFit),
-                          }}
-                          draggable={false}
-                        />
-                        {showCuttingMarkers && (
-                          <svg
-                            className="absolute inset-0 pointer-events-none"
-                            width="100%"
-                            height="100%"
-                            style={{ overflow: "visible" }}
-                          >
-                            {/* Top-left corner marker */}
-                            <g>
-                              <line
-                                x1="0"
-                                y1="0"
-                                x2="8"
-                                y2="0"
-                                stroke={markerColor}
-                                strokeWidth="0.5"
-                              />
-                              <line
-                                x1="0"
-                                y1="0"
-                                x2="0"
-                                y2="8"
-                                stroke={markerColor}
-                                strokeWidth="0.5"
-                              />
-                            </g>
-                            {/* Top-right corner marker */}
-                            <g>
-                              <line
-                                x1="100%"
-                                y1="0"
-                                x2="calc(100% - 8px)"
-                                y2="0"
-                                stroke={markerColor}
-                                strokeWidth="0.5"
-                              />
-                              <line
-                                x1="100%"
-                                y1="0"
-                                x2="100%"
-                                y2="8"
-                                stroke={markerColor}
-                                strokeWidth="0.5"
-                              />
-                            </g>
-                            {/* Bottom-left corner marker */}
-                            <g>
-                              <line
-                                x1="0"
-                                y1="100%"
-                                x2="8"
-                                y2="100%"
-                                stroke={markerColor}
-                                strokeWidth="0.5"
-                              />
-                              <line
-                                x1="0"
-                                y1="100%"
-                                x2="0"
-                                y2="calc(100% - 8px)"
-                                stroke={markerColor}
-                                strokeWidth="0.5"
-                              />
-                            </g>
-                            {/* Bottom-right corner marker */}
-                            <g>
-                              <line
-                                x1="100%"
-                                y1="100%"
-                                x2="calc(100% - 8px)"
-                                y2="100%"
-                                stroke={markerColor}
-                                strokeWidth="0.5"
-                              />
-                              <line
-                                x1="100%"
-                                y1="100%"
-                                x2="100%"
-                                y2="calc(100% - 8px)"
-                                stroke={markerColor}
-                                strokeWidth="0.5"
-                              />
-                            </g>
-                          </svg>
-                        )}
-                      </>
-                    ) : (
-                      <div className="flex items-center justify-center h-full cursor-pointer">
-                        <span className="text-xs text-muted-foreground">
+            {/* Interactive Cell Overlay for clicks */}
+            <div className="absolute inset-0">
+              {cells.map((row, rowIndex) =>
+                row.map((cell, colIndex) => {
+                  const hasImage = cell.imageId !== null;
+                  const cellPosition = CanvasRenderer.getCellPosition(
+                    rowIndex,
+                    colIndex,
+                    cellDimensions,
+                    rowGap,
+                    columnGap,
+                    dpi
+                  );
+
+                  return (
+                    <div
+                      key={cell.id}
+                      className={cn(
+                        "absolute cursor-pointer transition-colors hover:bg-primary/5",
+                        !hasImage && "bg-black/5 flex items-center justify-center"
+                      )}
+                      style={{
+                        width: `${cellPosition.width}px`,
+                        height: `${cellPosition.height}px`,
+                        left: `${cellPosition.left}px`,
+                        top: `${cellPosition.top}px`,
+                      }}
+                      onClick={() => handleCellClick(rowIndex, colIndex)}
+                    >
+                      {!hasImage && (
+                        <span className="text-xs text-muted-foreground select-none">
                           Empty
                         </span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
 
           {/* Image selection popup */}

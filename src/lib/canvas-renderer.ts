@@ -4,6 +4,11 @@ import {
   ImageFitOption,
   CollageImage,
 } from "@/types/collage";
+import {
+  calculateImageTransform,
+  drawTransformedImage,
+  CellBounds,
+} from "@/lib/matrix-transform";
 
 // Color conversion utility for oklch to hex - used for export compatibility
 const oklchToHex = (oklchString: string): string => {
@@ -39,6 +44,29 @@ const oklchToHex = (oklchString: string): string => {
 export interface CanvasRendererOptions {
   dpi?: number;
   forExport?: boolean;
+  targetCanvas?: HTMLCanvasElement;
+}
+
+const imageCache = new Map<string, HTMLImageElement>();
+
+export function loadImage(src: string): Promise<HTMLImageElement> {
+  if (imageCache.has(src)) {
+    const cached = imageCache.get(src)!;
+    if (cached.complete && cached.naturalWidth !== 0) {
+      return Promise.resolve(cached);
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      imageCache.set(src, img);
+      resolve(img);
+    };
+    img.onerror = (err) => reject(err);
+    img.src = src;
+  });
 }
 
 // Standalone functions for testing
@@ -154,9 +182,7 @@ export class CanvasRenderer {
     const orientation = cell.orientation || "auto";
 
     if (orientation === "landscape") {
-      // Calculate the scale factor needed after rotation
       const scaleRatio = cellWidth / cellHeight;
-
       let scaleTransform = "";
 
       if (objectFit === "cover" || objectFit === "fill") {
@@ -213,6 +239,135 @@ export class CanvasRenderer {
     if (!imageId) return "cover";
     const image = images.find((img) => img.id === imageId);
     return image?.fit || "cover";
+  }
+
+  /**
+   * Renders the entire collage to a native HTML5 Canvas using mathematical matrix transformation stack.
+   * Directly uses original image resolution and target DPI (e.g. 300 DPI or 600 DPI).
+   */
+  static async renderToCanvas(
+    collageState: CollageState,
+    options: CanvasRendererOptions = {}
+  ): Promise<HTMLCanvasElement> {
+    const { dpi = 96, targetCanvas } = options;
+    const { pageSize, layout, cells, images, showCuttingMarkers, markerColor, rowGap, columnGap } =
+      collageState;
+
+    const canvasDimensions = this.getCanvasDimensions(pageSize, dpi);
+    const cellDimensions = this.getCellDimensions(layout, pageSize.margin, dpi);
+
+    const canvas = targetCanvas || document.createElement("canvas");
+    canvas.width = Math.round(canvasDimensions.width);
+    canvas.height = Math.round(canvasDimensions.height);
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("Failed to get 2D context from canvas");
+    }
+
+    // Fill background with white
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Pre-load original source images
+    const imageMap = new Map<string, HTMLImageElement>();
+    const loadPromises = images.map(async (img) => {
+      try {
+        const loadedImg = await loadImage(img.src);
+        imageMap.set(img.id, loadedImg);
+      } catch (err) {
+        console.warn(`Failed to load image for canvas rendering: ${img.name}`, err);
+      }
+    });
+
+    await Promise.all(loadPromises);
+
+    // Render cells using matrix transformation stack
+    cells.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const cellPos = this.getCellPosition(
+          rowIndex,
+          colIndex,
+          cellDimensions,
+          rowGap,
+          columnGap,
+          dpi
+        );
+
+        const cellBounds: CellBounds = {
+          left: cellPos.left,
+          top: cellPos.top,
+          width: cellPos.width,
+          height: cellPos.height,
+        };
+
+        if (cell.imageId && imageMap.has(cell.imageId)) {
+          const imgEl = imageMap.get(cell.imageId)!;
+          const imageObj = images.find((i) => i.id === cell.imageId);
+          const fit = imageObj?.fit || "cover";
+          const orientation = cell.orientation || imageObj?.orientation || "auto";
+
+          // Derive matrix transform parameters
+          const transform =
+            cell.transform ||
+            imageObj?.transform ||
+            calculateImageTransform(
+              imgEl.naturalWidth,
+              imgEl.naturalHeight,
+              cellBounds.width,
+              cellBounds.height,
+              fit,
+              orientation
+            );
+
+          // Draw image on canvas matrix transformation stack
+          drawTransformedImage(ctx, imgEl, cellBounds, transform);
+
+          // Draw cutting markers mathematically on canvas
+          if (showCuttingMarkers) {
+            ctx.save();
+            ctx.strokeStyle = markerColor || "#9ca3af";
+            ctx.lineWidth = Math.max(1, Math.round((0.5 / 96) * dpi));
+            const markerLen = Math.max(4, Math.round((2.5 / 25.4) * dpi)); // ~2.5mm line
+
+            ctx.beginPath();
+            // Top-Left
+            ctx.moveTo(cellBounds.left, cellBounds.top + markerLen);
+            ctx.lineTo(cellBounds.left, cellBounds.top);
+            ctx.lineTo(cellBounds.left + markerLen, cellBounds.top);
+
+            // Top-Right
+            ctx.moveTo(cellBounds.left + cellBounds.width - markerLen, cellBounds.top);
+            ctx.lineTo(cellBounds.left + cellBounds.width, cellBounds.top);
+            ctx.lineTo(cellBounds.left + cellBounds.width, cellBounds.top + markerLen);
+
+            // Bottom-Left
+            ctx.moveTo(cellBounds.left, cellBounds.top + cellBounds.height - markerLen);
+            ctx.lineTo(cellBounds.left, cellBounds.top + cellBounds.height);
+            ctx.lineTo(cellBounds.left + markerLen, cellBounds.top + cellBounds.height);
+
+            // Bottom-Right
+            ctx.moveTo(cellBounds.left + cellBounds.width - markerLen, cellBounds.top + cellBounds.height);
+            ctx.lineTo(cellBounds.left + cellBounds.width, cellBounds.top + cellBounds.height);
+            ctx.lineTo(cellBounds.left + cellBounds.width, cellBounds.top + cellBounds.height - markerLen);
+
+            ctx.stroke();
+            ctx.restore();
+          }
+        } else {
+          // Draw empty cell placeholder
+          ctx.save();
+          ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
+          ctx.fillRect(cellBounds.left, cellBounds.top, cellBounds.width, cellBounds.height);
+          ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(cellBounds.left, cellBounds.top, cellBounds.width, cellBounds.height);
+          ctx.restore();
+        }
+      });
+    });
+
+    return canvas;
   }
 
   static renderCanvasElement(

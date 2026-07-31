@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import {
   Download,
@@ -14,6 +13,7 @@ import { Button } from "./ui/button";
 import { Switch } from "./ui/switch";
 import { Input } from "./ui/input";
 import { UnitConverter } from "@/lib/unit-converter";
+import { CanvasRenderer } from "@/lib/canvas-renderer";
 import { useCollage } from "@/context/CollageContext";
 
 // Color conversion utility for oklch to hex
@@ -289,75 +289,16 @@ export function ExportPanel({ collageRef }: ExportPanelProps) {
   }, [settings.exportQuality]);
 
   const handleExport = async () => {
-    if (!collageRef.current || !isEnabled) return;
+    if (!isEnabled) return;
 
     setIsExporting(true);
 
     try {
-      // Clone the canvas element for export processing
-      const exportElement = collageRef.current.cloneNode(true) as HTMLElement;
-
-      // Create a temporary container and add it to the document
-      const tempContainer = document.createElement("div");
-      tempContainer.style.position = "absolute";
-      tempContainer.style.left = "-99999px";
-      tempContainer.style.top = "-99999px";
-      tempContainer.appendChild(exportElement);
-      document.body.appendChild(tempContainer);
-
-      // Add CSS variable overrides to ensure compatible colors
-      const styleOverride = document.createElement("style");
-      styleOverride.innerHTML = `
-        * {
-          --background: #ffffff !important;
-          --foreground: #020817 !important;
-          --card: #ffffff !important;
-          --card-foreground: #020817 !important;
-          --popover: #ffffff !important;
-          --popover-foreground: #020817 !important;
-          --primary: #0f172a !important;
-          --primary-foreground: #f8fafc !important;
-          --secondary: #f1f5f9 !important;
-          --secondary-foreground: #0f172a !important;
-          --muted: #f1f5f9 !important;
-          --muted-foreground: #64748b !important;
-          --accent: #f1f5f9 !important;
-          --accent-foreground: #0f172a !important;
-          --destructive: #ef4444 !important;
-          --destructive-foreground: #f8fafc !important;
-          --border: #e2e8f0 !important;
-          --input: #e2e8f0 !important;
-          --ring: #94a3b8 !important;
-          --radius: 0.5rem !important;
-        }
-      `;
-      document.head.appendChild(styleOverride);
-
-      // Convert oklch colors in the export element
-      convertElementOklchColors(exportElement);
-
-      // Wait a moment for style processing
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // Calculate the actual scale needed to achieve the desired DPI
-      // Canvas default is 96 DPI, so we need to scale accordingly
-      const actualScale = (customDpi / 96) * exportScale;
-
-      // Capture the processed canvas
-      const canvas = await html2canvas(exportElement, {
-        scale: actualScale, // Use calculated scale for true DPI
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        allowTaint: true,
-        logging: false,
-        width: exportElement.offsetWidth,
-        height: exportElement.offsetHeight,
-        imageTimeout: 15000,
+      // Render canvas directly using mathematical transformation matrix stack at high DPI
+      const targetDpi = Math.round(customDpi * exportScale);
+      const canvas = await CanvasRenderer.renderToCanvas(collageState, {
+        dpi: targetDpi,
       });
-
-      // Clean up temporary elements
-      document.body.removeChild(tempContainer);
-      document.head.removeChild(styleOverride);
 
       if (exportFormat === "png") {
         // Export as PNG with proper DPI metadata
