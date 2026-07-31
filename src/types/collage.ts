@@ -46,6 +46,7 @@ export interface CollageCell {
   id: string;
   imageId: string | null;
   orientation?: ImageOrientation;
+  fit?: ImageFitOption;
   transform?: ImageTransform;
 }
 

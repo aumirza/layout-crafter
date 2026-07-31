@@ -75,28 +75,12 @@ export function LayoutSelector() {
 
   return (
     <div className="space-y-4">
-      {/* Equal Page Division Action Banner */}
-      <div className="bg-linear-to-r from-purple-500/10 to-indigo-500/10 p-3 rounded-xl border border-purple-500/20 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold text-xs">
-            <Grid className="h-4 w-4" />
-            <span>Equal Page Division</span>
-          </div>
-          <span className="text-[10px] bg-purple-500/20 text-purple-600 dark:text-purple-300 font-mono px-1.5 py-0.5 rounded font-semibold">
-            Auto Fit
-          </span>
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          Divide paper into 2, 4, 8, 16 equal pieces with margin & gap calculation.
-        </p>
-        <Button
-          onClick={() => setIsEqualDivisionOpen(true)}
-          className="w-full h-8 text-xs font-bold bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg gap-1.5 shadow-sm"
-        >
-          <Grid className="h-3.5 w-3.5" />
-          Divide Page into Pieces...
-        </Button>
-      </div>
+      {/* Equal Division Modal */}
+      <EqualDivisionModal
+        open={isEqualDivisionOpen}
+        onClose={() => setIsEqualDivisionOpen(false)}
+        onApply={() => setIsEqualDivisionOpen(false)}
+      />
 
       <hr className="border-border/40" />
 

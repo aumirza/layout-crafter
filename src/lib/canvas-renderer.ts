@@ -304,21 +304,24 @@ export class CanvasRenderer {
         if (cell.imageId && imageMap.has(cell.imageId)) {
           const imgEl = imageMap.get(cell.imageId)!;
           const imageObj = images.find((i) => i.id === cell.imageId);
-          const fit = imageObj?.fit || "cover";
+          const fit = cell.fit || imageObj?.fit || "cover";
           const orientation = cell.orientation || imageObj?.orientation || "auto";
 
           // Derive matrix transform parameters
-          const transform =
-            cell.transform ||
-            imageObj?.transform ||
-            calculateImageTransform(
-              imgEl.naturalWidth,
-              imgEl.naturalHeight,
-              cellBounds.width,
-              cellBounds.height,
-              fit,
-              orientation
-            );
+          const baseTransform = calculateImageTransform(
+            imgEl.naturalWidth,
+            imgEl.naturalHeight,
+            cellBounds.width,
+            cellBounds.height,
+            fit,
+            orientation
+          );
+
+          const transform = cell.transform
+            ? { ...baseTransform, ...cell.transform }
+            : imageObj?.transform
+            ? { ...baseTransform, ...imageObj.transform }
+            : baseTransform;
 
           // Draw image on canvas matrix transformation stack
           drawTransformedImage(ctx, imgEl, cellBounds, transform);

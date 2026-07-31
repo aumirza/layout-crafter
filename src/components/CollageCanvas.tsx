@@ -1,34 +1,27 @@
-import { forwardRef, useEffect, useState, useRef } from "react";
+import { forwardRef, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { CollageState, ImageFitOption, CollageCell } from "@/types/collage";
+import { CollageState } from "@/types/collage";
 import { UnitConverter } from "@/lib/unit-converter";
 import { CanvasRenderer } from "@/lib/canvas-renderer";
 
 interface CollageCanvasProps {
   collageState: CollageState;
-  onAssignImage: (rowIndex: number, colIndex: number, imageId: string) => void;
+  selectedCellId?: string | null;
+  onAssignImage: (rowIndex: number, colIndex: number, cellId: string) => void;
 }
 
 export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
-  ({ collageState, onAssignImage }, ref) => {
+  ({ collageState, selectedCellId, onAssignImage }, ref) => {
     const {
       pageSize,
       layout,
       cells,
-      images,
       rows,
       columns,
-      showCuttingMarkers,
-      markerColor,
       selectedUnit,
       rowGap,
       columnGap,
     } = collageState;
-    const [activeCell, setActiveCell] = useState<{
-      row: number;
-      col: number;
-    } | null>(null);
-    const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -53,30 +46,11 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
       }
     }, [collageState, dpi]);
 
-    // Reset the selected image when the images change
-    useEffect(() => {
-      if (images.length === 0) {
-        setSelectedImageId(null);
-      } else if (images.length === 1 && !selectedImageId) {
-        setSelectedImageId(images[0].id);
-      }
-    }, [images, selectedImageId]);
-
     const handleCellClick = (rowIndex: number, colIndex: number) => {
-      // Show image selection for this cell
-      setActiveCell({ row: rowIndex, col: colIndex });
-    };
-
-    const handleImageSelect = (imageId: string) => {
-      if (activeCell) {
-        onAssignImage(activeCell.row, activeCell.col, imageId);
-        setActiveCell(null); // Close the selection
+      const cellObj = cells[rowIndex]?.[colIndex];
+      if (cellObj) {
+        onAssignImage(rowIndex, colIndex, cellObj.id);
       }
-      setSelectedImageId(imageId);
-    };
-
-    const closeImageSelection = () => {
-      setActiveCell(null);
     };
 
     // Format dimensions according to selected unit
@@ -112,6 +86,8 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
               {cells.map((row, rowIndex) =>
                 row.map((cell, colIndex) => {
                   const hasImage = cell.imageId !== null;
+                  const isSelected = selectedCellId === cell.id;
+
                   const cellPosition = CanvasRenderer.getCellPosition(
                     rowIndex,
                     colIndex,
@@ -125,8 +101,11 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
                     <div
                       key={cell.id}
                       className={cn(
-                        "absolute cursor-pointer transition-colors hover:bg-primary/5",
-                        !hasImage && "bg-black/5 flex items-center justify-center"
+                        "absolute cursor-pointer transition-all duration-150 group",
+                        isSelected
+                          ? "ring-2 ring-primary ring-offset-1 bg-primary/10 z-20 shadow-md"
+                          : "hover:bg-primary/5 hover:border hover:border-primary/40",
+                        !hasImage && !isSelected && "bg-black/5 flex items-center justify-center"
                       )}
                       style={{
                         width: `${cellPosition.width}px`,
@@ -137,8 +116,8 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
                       onClick={() => handleCellClick(rowIndex, colIndex)}
                     >
                       {!hasImage && (
-                        <span className="text-xs text-muted-foreground select-none">
-                          Empty
+                        <span className="text-[11px] font-medium text-muted-foreground select-none group-hover:text-primary transition-colors">
+                          + Empty Cell
                         </span>
                       )}
                     </div>
@@ -147,40 +126,6 @@ export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
               )}
             </div>
           </div>
-
-          {/* Image selection popup */}
-          {activeCell && images.length > 0 && (
-            <div className="absolute bg-white border rounded-lg shadow-lg p-2 mt-2 z-10">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="text-sm font-medium">Select Image</h4>
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={closeImageSelection}
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                {images.map((image) => (
-                  <div
-                    key={image.id}
-                    className={cn(
-                      "p-1 border rounded cursor-pointer",
-                      selectedImageId === image.id && "ring-2 ring-primary"
-                    )}
-                    onClick={() => handleImageSelect(image.id)}
-                  >
-                    <img
-                      src={image.src}
-                      alt={image.name}
-                      className="w-full h-12 object-cover rounded"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="text-center text-sm text-muted-foreground mt-2">
