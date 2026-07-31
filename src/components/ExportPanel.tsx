@@ -15,6 +15,7 @@ import { Input } from "./ui/input";
 import { UnitConverter } from "@/lib/unit-converter";
 import { CanvasRenderer } from "@/lib/canvas-renderer";
 import { useCollage } from "@/context/CollageContext";
+import { exportKonvaStageToCanvas } from "./KonvaCollageCanvas";
 
 // Color conversion utility for oklch to hex
 const oklchToHex = (oklchString: string): string => {
@@ -294,11 +295,19 @@ export function ExportPanel({ collageRef }: ExportPanelProps) {
     setIsExporting(true);
 
     try {
-      // Render canvas directly using mathematical transformation matrix stack at high DPI
       const targetDpi = Math.round(customDpi * exportScale);
-      const canvas = await CanvasRenderer.renderToCanvas(collageState, {
-        dpi: targetDpi,
-      });
+      const konvaStage = (collageRef.current as any)?.__konvaStage;
+
+      let canvas: HTMLCanvasElement;
+      if (collageState.useKonvaCanvas !== false && konvaStage) {
+        // Fast direct Konva Stage export leveraging GPU-cached scene graph
+        canvas = exportKonvaStageToCanvas(konvaStage, targetDpi);
+      } else {
+        // Legacy Canvas matrix render stack fallback
+        canvas = await CanvasRenderer.renderToCanvas(collageState, {
+          dpi: targetDpi,
+        });
+      }
 
       if (exportFormat === "png") {
         // Export as PNG with proper DPI metadata

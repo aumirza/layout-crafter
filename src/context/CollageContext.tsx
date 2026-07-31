@@ -37,6 +37,7 @@ interface CollageContextType {
     imageId: string,
     updates: Partial<CollageImage>
   ) => void;
+  updateCell: (cellId: string, updates: Partial<CollageCell>) => void;
   rearrangeCollage: () => void;
   distributeEqually: () => void;
   setSpaceOptimization: (value: SpaceOptimization) => void;
@@ -59,6 +60,8 @@ interface CollageContextType {
   setColumnGap: (gap: number) => void;
   setGapsLinked: (linked: boolean) => void;
   updateGap: (type: 'row' | 'column', value: number) => void;
+  // Feature flag functions
+  setUseKonvaCanvas: (enabled: boolean) => void;
   // Add shared app settings
   settings: {
     autoSave: boolean;
@@ -172,6 +175,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     rowGap: 2, // Default: 2mm
     columnGap: 2, // Default: 2mm
     gapsLinked: true, // Default: linked
+    useKonvaCanvas: localStorage.getItem("useKonvaCanvas") !== "false", // Default: true
   });
 
   // App settings state
@@ -393,6 +397,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         margin,
       };
 
+      const totalCells = rows * columns;
       const newCells: CollageCell[][] = Array(rows)
         .fill(null)
         .map((_, rowIndex) =>
@@ -404,6 +409,39 @@ export function CollageProvider({ children }: { children: ReactNode }) {
               orientation: "auto" as ImageOrientation,
             }))
         );
+
+      // Auto-populate new equal division cells with uploaded images
+      if (prev.images.length === 1 && prev.images[0].src) {
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < columns; c++) {
+            newCells[r][c].imageId = prev.images[0].id;
+          }
+        }
+      } else if (prev.images.length > 0) {
+        const imagePool: { id: string; orientation: ImageOrientation }[] = [];
+        prev.images.forEach((image) => {
+          if (image.count && image.count > 0) {
+            for (let i = 0; i < Math.min(image.count, totalCells); i++) {
+              let orientation: ImageOrientation = image.orientation || "auto";
+              if (prev.spaceOptimization === "tight" && orientation === "auto") {
+                orientation = i % 2 === 0 ? "portrait" : "landscape";
+              }
+              imagePool.push({ id: image.id, orientation });
+            }
+          }
+        });
+
+        let poolIndex = 0;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < columns; c++) {
+            if (poolIndex < imagePool.length) {
+              newCells[r][c].imageId = imagePool[poolIndex].id;
+              newCells[r][c].orientation = imagePool[poolIndex].orientation;
+              poolIndex++;
+            }
+          }
+        }
+      }
 
       toast({
         title: "Equal Page Division Applied",
@@ -433,19 +471,24 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         })),
       ];
 
-      // If there's only one image, auto-fill all cells with that image
+      // If there's only one image, auto-fill all cells with that image and set count to total cells
       if (prev.images.length === 0 && newImages.length === 1) {
+        const totalCells = prev.rows * prev.columns;
+        const singleImage = {
+          ...newImages[0],
+          count: totalCells,
+        };
         const updatedCells = prev.cells.map((row) =>
           row.map((cell) => ({
             ...cell,
-            imageId: newImages[0].id,
+            imageId: singleImage.id,
             orientation: "auto" as ImageOrientation,
           }))
         );
 
         return {
           ...prev,
-          images: updatedImages,
+          images: [singleImage],
           cells: updatedCells,
         };
       }
@@ -526,12 +569,48 @@ export function CollageProvider({ children }: { children: ReactNode }) {
   const updateImageCount = (imageId: string, count: number) => {
     setCollageState((prev) => {
       const updatedImages = prev.images.map((img) =>
-        img.id === imageId ? { ...img, count } : img
+        img.id === imageId ? { ...img, count: Math.max(0, count) } : img
+      );
+
+      const totalCells = prev.rows * prev.columns;
+      const imagePool: { id: string; orientation: ImageOrientation }[] = [];
+      updatedImages.forEach((image) => {
+        if (image.count && image.count > 0) {
+          for (let i = 0; i < Math.min(image.count, totalCells); i++) {
+            let orientation: ImageOrientation = image.orientation || "auto";
+            if (prev.spaceOptimization === "tight" && orientation === "auto") {
+              orientation = i % 2 === 0 ? "portrait" : "landscape";
+            }
+            imagePool.push({
+              id: image.id,
+              orientation,
+            });
+          }
+        }
+      });
+
+      let poolIndex = 0;
+      const updatedCells = prev.cells.map((row) =>
+        row.map((cell) => {
+          if (poolIndex < imagePool.length) {
+            const item = imagePool[poolIndex++];
+            return {
+              ...cell,
+              imageId: item.id,
+              orientation: item.orientation,
+            };
+          }
+          return {
+            ...cell,
+            imageId: null,
+          };
+        })
       );
 
       return {
         ...prev,
         images: updatedImages,
+        cells: updatedCells,
       };
     });
   };
@@ -541,34 +620,52 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     updates: Partial<CollageImage>
   ) => {
     setCollageState((prev) => {
-      // Update the image settings
+      // Update the image settings in media pool
       const updatedImages = prev.images.map((img) =>
         img.id === imageId ? { ...img, ...updates } : img
       );
 
-      // If orientation was updated, also update cells using this image
-      if (updates.orientation) {
-        const updatedCells = prev.cells.map((row) =>
-          row.map((cell) =>
-            cell.imageId === imageId
-              ? {
-                  ...cell,
-                  orientation: updates.orientation as ImageOrientation,
-                }
-              : cell
-          )
-        );
+      // Apply updates to ALL cells displaying this image
+      const updatedCells = prev.cells.map((row) =>
+        row.map((cell) => {
+          if (cell.imageId !== imageId) return cell;
 
-        return {
-          ...prev,
-          images: updatedImages,
-          cells: updatedCells,
-        };
-      }
+          const cellUpdates: Partial<CollageCell> = {};
+          if (updates.fit !== undefined) cellUpdates.fit = updates.fit;
+          if (updates.orientation !== undefined) cellUpdates.orientation = updates.orientation;
+          if (updates.transform !== undefined) cellUpdates.transform = updates.transform;
+
+          return {
+            ...cell,
+            ...cellUpdates,
+          };
+        })
+      );
 
       return {
         ...prev,
         images: updatedImages,
+        cells: updatedCells,
+      };
+    });
+  };
+
+  const updateCell = (cellId: string, updates: Partial<CollageCell>) => {
+    setCollageState((prev) => {
+      const updatedCells = prev.cells.map((row) =>
+        row.map((cell) =>
+          cell.id === cellId
+            ? {
+                ...cell,
+                ...updates,
+              }
+            : cell
+        )
+      );
+
+      return {
+        ...prev,
+        cells: updatedCells,
       };
     });
   };
@@ -755,16 +852,53 @@ export function CollageProvider({ children }: { children: ReactNode }) {
       const cellsPerImage = Math.floor(totalCells / activeImages.length);
       const remainder = totalCells % activeImages.length;
 
+      let activeIdx = 0;
       // Update image counts
-      const updatedImages = prev.images.map((img, index) => {
+      const updatedImages = prev.images.map((img) => {
         if (img.count === 0) return img;
         // Distribute remainder to first few images
-        const extraCell = index < remainder ? 1 : 0;
+        const extraCell = activeIdx < remainder ? 1 : 0;
+        activeIdx++;
         return {
           ...img,
           count: cellsPerImage + extraCell,
         };
       });
+
+      // Build updated cell grid based on equalized image counts
+      const imagePool: { id: string; orientation: ImageOrientation }[] = [];
+      updatedImages.forEach((image) => {
+        if (image.count && image.count > 0) {
+          for (let i = 0; i < Math.min(image.count, totalCells); i++) {
+            let orientation: ImageOrientation = image.orientation || "auto";
+            if (prev.spaceOptimization === "tight" && orientation === "auto") {
+              orientation = i % 2 === 0 ? "portrait" : "landscape";
+            }
+            imagePool.push({
+              id: image.id,
+              orientation,
+            });
+          }
+        }
+      });
+
+      let poolIndex = 0;
+      const updatedCells = prev.cells.map((row) =>
+        row.map((cell) => {
+          if (poolIndex < imagePool.length) {
+            const item = imagePool[poolIndex++];
+            return {
+              ...cell,
+              imageId: item.id,
+              orientation: item.orientation,
+            };
+          }
+          return {
+            ...cell,
+            imageId: null,
+          };
+        })
+      );
 
       toast({
         title: "Distributed equally",
@@ -774,6 +908,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
       return {
         ...prev,
         images: updatedImages,
+        cells: updatedCells,
       };
     });
   };
@@ -897,10 +1032,13 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Initialize cells when the component first mounts
-  useState(() => {
-    initializeCells();
-  });
+  const setUseKonvaCanvas = useCallback((enabled: boolean) => {
+    setCollageState((prev) => ({
+      ...prev,
+      useKonvaCanvas: enabled,
+    }));
+    localStorage.setItem("useKonvaCanvas", enabled.toString());
+  }, []);
 
   return (
     <CollageContext.Provider
@@ -912,6 +1050,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         removeImage,
         updateImageCount,
         updateImageSettings,
+        updateCell,
         rearrangeCollage,
         distributeEqually,
         setSpaceOptimization,
@@ -928,6 +1067,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         setColumnGap,
         setGapsLinked,
         updateGap,
+        setUseKonvaCanvas,
         settings: appSettings,
         updateSettings,
       }}

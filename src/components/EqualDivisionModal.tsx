@@ -114,7 +114,7 @@ export function EqualDivisionModal({
       <DialogContent className="sm:max-w-[560px] max-h-[92vh] overflow-y-auto">
         <DialogHeader className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-linear-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
+            <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-xs">
               <Grid className="h-4 w-4" />
             </div>
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
@@ -122,7 +122,7 @@ export function EqualDivisionModal({
             </DialogTitle>
             <Badge
               variant="outline"
-              className="text-[10px] uppercase font-semibold text-purple-600 border-purple-500/30 ml-auto"
+              className="text-[10px] uppercase font-semibold text-primary border-primary/30 ml-auto"
             >
               Auto Calculate
             </Badge>
@@ -284,10 +284,10 @@ export function EqualDivisionModal({
           </div>
 
           {/* Result Card & Visual Grid Preview */}
-          <div className="bg-linear-to-r from-purple-500/10 via-indigo-500/10 to-blue-500/10 border border-purple-500/20 rounded-xl p-3.5 space-y-3">
+          <div className="bg-muted/40 border border-border/60 rounded-xl p-3.5 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400 tracking-wider">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
                   Calculated Photo Cell Size
                 </span>
                 <div className="text-lg font-extrabold font-mono text-foreground tracking-tight">
@@ -295,16 +295,16 @@ export function EqualDivisionModal({
                 </div>
               </div>
 
-              <Badge className="bg-purple-600 text-white font-mono text-xs px-2.5 py-1">
+              <Badge className="bg-primary text-primary-foreground font-mono text-xs px-2.5 py-1">
                 {division.totalPieces} Cells
               </Badge>
             </div>
 
             {/* SVG Visual Layout Diagram */}
-            <div className="relative bg-background/80 rounded-lg p-3 border border-border/40 flex items-center justify-center min-h-[120px]">
+            <div className="relative bg-background rounded-lg p-3 border border-border/40 flex items-center justify-center min-h-[120px]">
               <svg
                 viewBox={`0 0 ${selectedPageSize.width} ${selectedPageSize.height}`}
-                className="max-h-[110px] w-auto drop-shadow-sm border border-muted-foreground/30 bg-card rounded"
+                className="max-h-[110px] w-auto drop-shadow-xs border border-muted-foreground/30 bg-card rounded"
                 style={{
                   aspectRatio: `${selectedPageSize.width} / ${selectedPageSize.height}`,
                 }}
@@ -316,7 +316,7 @@ export function EqualDivisionModal({
                   width={selectedPageSize.width - margin * 2}
                   height={selectedPageSize.height - margin * 2}
                   fill="none"
-                  stroke="rgba(147, 51, 234, 0.3)"
+                  stroke="rgba(99, 102, 241, 0.4)"
                   strokeWidth="1"
                   strokeDasharray="2,2"
                 />
@@ -363,7 +363,7 @@ export function EqualDivisionModal({
           </Button>
           <Button
             onClick={handleApply}
-            className="rounded-xl text-xs font-bold gap-1.5 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md"
+            className="rounded-xl text-xs font-bold gap-1.5"
           >
             Apply Equal Division
             <ArrowRight className="h-3.5 w-3.5" />

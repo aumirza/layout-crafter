@@ -46,6 +46,7 @@ export interface CollageCell {
   id: string;
   imageId: string | null;
   orientation?: ImageOrientation;
+  fit?: ImageFitOption;
   transform?: ImageTransform;
 }
 
@@ -63,6 +64,7 @@ export interface CollageState {
   rowGap: number; // in mm, default: 2
   columnGap: number; // in mm, default: 2
   gapsLinked: boolean; // default: true
+  useKonvaCanvas?: boolean; // feature flag for Konva.js canvas engine vs legacy HTML5 canvas
 }
 
 export type ExportFormat = "png" | "pdf" | "print";

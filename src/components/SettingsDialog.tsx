@@ -82,9 +82,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     toggleCuttingMarkers(checked);
     toast({
       title: "Default cutting markers updated",
-      description: `New projects will ${
-        checked ? "show" : "hide"
-      } cutting markers by default`,
+      description: `New projects will ${checked ? "show" : "hide"
+        } cutting markers by default`,
     });
   };
 
@@ -267,7 +266,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     // Reset current session to defaults
     setUnit("mm");
     toggleCuttingMarkers(false);
-    
+
     // Reset gap settings to defaults
     setRowGap(2);
     setColumnGap(2);
@@ -282,7 +281,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>

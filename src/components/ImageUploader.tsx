@@ -6,6 +6,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ImageSettings } from "./ImageSettings";
 import { useCollage } from "@/context/CollageContext";
+import { cn } from "@/lib/utils";
 
 export function ImageUploader() {
   const {
@@ -94,13 +95,23 @@ export function ImageUploader() {
   const totalQuantity = images.reduce((sum, img) => sum + (img.count || 0), 0);
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-medium">Images</h2>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs font-semibold text-sidebar-foreground">Media Assets</h2>
+        {images.length > 0 && (
+          <span className="text-[10px] font-mono text-muted-foreground">
+            {totalQuantity} / {maxCells} cells
+          </span>
+        )}
+      </div>
 
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center ${
-          isDragging ? "border-primary bg-primary/5" : "border-gray-300"
-        }`}
+        className={cn(
+          "border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2",
+          isDragging
+            ? "border-sidebar-primary bg-sidebar-primary/10"
+            : "border-sidebar-border bg-sidebar-accent/20 hover:bg-sidebar-accent/40 hover:border-sidebar-border/80"
+        )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -115,40 +126,70 @@ export function ImageUploader() {
           onChange={(e) => handleFileChange(e.target.files)}
         />
 
-        <div className="flex flex-col items-center">
-          <div className="bg-primary/10 rounded-full p-3 mb-3">
-            <Plus className="h-6 w-6 text-primary" />
-          </div>
-          <p className="text-sm font-medium">
-            Click to upload or drag and drop
+        <div className="size-10 rounded-full bg-sidebar-primary/10 flex items-center justify-center text-sidebar-primary">
+          <Plus className="size-5" />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <p className="text-xs font-semibold text-sidebar-foreground">
+            Click or drag photos here
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            PNG, JPG, GIF up to 10MB
+          <p className="text-[10px] text-muted-foreground">
+            Supports PNG, JPG, WEBP, GIF
           </p>
         </div>
       </div>
 
       {images.length > 0 && (
-        <div className="mt-4 space-y-4">
-          <h3 className="text-sm font-medium">Uploaded Images</h3>
-          <div className="max-h-52 overflow-y-auto space-y-2 p-1">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-sidebar-foreground">
+              Uploaded Collection ({images.length})
+            </h3>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px] px-2 font-medium rounded-lg gap-1 border-sidebar-border"
+                onClick={distributeEqually}
+                disabled={images.length === 0}
+              >
+                <DivideSquare className="size-3" />
+                Equalize
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px] px-2 font-medium rounded-lg gap-1 border-sidebar-border"
+                onClick={rearrangeCollage}
+                disabled={images.length === 0}
+              >
+                <Shuffle className="size-3" />
+                Shuffle
+              </Button>
+            </div>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto flex flex-col gap-2 pr-1">
             {images.map((image) => (
               <div
                 key={image.id}
-                className="flex flex-col bg-white p-2 rounded border group relative"
+                className="flex flex-col bg-sidebar-accent/30 p-2.5 rounded-xl border border-sidebar-border group relative gap-2"
               >
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-muted rounded overflow-hidden shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 bg-background rounded-lg overflow-hidden shrink-0 border border-sidebar-border">
                     <img
                       src={image.src}
                       alt={image.name}
-                      className="w-full h-full object-cover"
+                      className="size-full object-cover"
                     />
                   </div>
-                  <div className="ml-2 overflow-hidden grow">
-                    <p className="text-sm font-medium truncate">{image.name}</p>
-                    <div className="flex items-center mt-1">
-                      <label className="text-xs text-muted-foreground mr-2">
+                  <div className="overflow-hidden flex-1 flex flex-col gap-1">
+                    <p className="text-xs font-medium truncate text-sidebar-foreground">
+                      {image.name}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] text-muted-foreground">
                         Count:
                       </label>
                       <Input
@@ -157,7 +198,7 @@ export function ImageUploader() {
                         onChange={(e) =>
                           handleCountChange(image.id, e.target.value)
                         }
-                        className="h-6 w-16 text-xs"
+                        className="h-6 w-14 text-[11px] font-mono font-bold bg-background border-sidebar-border px-1.5"
                         min="0"
                       />
                     </div>
@@ -165,65 +206,35 @@ export function ImageUploader() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-muted-foreground shrink-0"
+                    className="size-7 text-muted-foreground hover:text-destructive shrink-0 rounded-lg"
                     onClick={() => removeImage(image.id)}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="size-3.5" />
                   </Button>
                 </div>
-                <div className="mt-2">
+                <div className="pt-1 border-t border-sidebar-border/50">
                   <ImageSettings image={image} />
                 </div>
               </div>
             ))}
           </div>
 
-          <div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-muted-foreground">
-                {totalQuantity} of {maxCells} cells will be filled
-              </span>
-            </div>
-
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={distributeEqually}
-                disabled={images.length === 0}
-              >
-                <DivideSquare className="h-3 w-3 mr-1" />
-                Distribute Equal
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={rearrangeCollage}
-                disabled={images.length === 0}
-              >
-                <Shuffle className="h-3 w-3 mr-1" />
-                Rearrange
-              </Button>
-            </div>
-
-            {totalQuantity > maxCells && (
-              <p className="text-xs text-red-500 mt-2">
-                Total quantity exceeds available cells. Some images will not be
-                displayed.
-              </p>
-            )}
-          </div>
+          {totalQuantity > maxCells && (
+            <p className="text-[11px] text-destructive font-medium bg-destructive/10 p-2 rounded-lg border border-destructive/20">
+              Total photo count ({totalQuantity}) exceeds total grid cells ({maxCells}). Some photos will be omitted.
+            </p>
+          )}
         </div>
       )}
 
       {images.length === 0 && (
-        <div className="text-center p-4 border rounded-lg bg-muted/30">
-          <Image className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">
-            No images uploaded yet
+        <div className="text-center p-6 border border-dashed border-sidebar-border rounded-xl bg-sidebar-accent/10 flex flex-col items-center gap-2">
+          <div className="size-10 rounded-full bg-sidebar-accent/40 flex items-center justify-center text-muted-foreground">
+            <Image className="size-5" />
+          </div>
+          <p className="text-xs font-semibold text-sidebar-foreground">No Media Uploaded</p>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Upload your images above to start populating your layout grid cells.
           </p>
         </div>
       )}

@@ -1,203 +1,47 @@
-import { forwardRef, useEffect, useState, useRef } from "react";
-import { cn } from "@/lib/utils";
-import { CollageState, ImageFitOption, CollageCell } from "@/types/collage";
-import { UnitConverter } from "@/lib/unit-converter";
-import { CanvasRenderer } from "@/lib/canvas-renderer";
+import { forwardRef } from "react";
+import { CollageState } from "@/types/collage";
+import { KonvaCollageCanvas } from "./KonvaCollageCanvas";
+import { LegacyCollageCanvas } from "./LegacyCollageCanvas";
+import { useCollage } from "@/context/CollageContext";
 
 interface CollageCanvasProps {
   collageState: CollageState;
-  onAssignImage: (rowIndex: number, colIndex: number, imageId: string) => void;
+  selectedCellId?: string | null;
+  onAssignImage: (rowIndex: number, colIndex: number, cellId: string) => void;
+  forceEngine?: "konva" | "legacy";
 }
 
 export const CollageCanvas = forwardRef<HTMLDivElement, CollageCanvasProps>(
-  ({ collageState, onAssignImage }, ref) => {
-    const {
-      pageSize,
-      layout,
-      cells,
-      images,
-      rows,
-      columns,
-      showCuttingMarkers,
-      markerColor,
-      selectedUnit,
-      rowGap,
-      columnGap,
-    } = collageState;
-    const [activeCell, setActiveCell] = useState<{
-      row: number;
-      col: number;
-    } | null>(null);
-    const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+  ({ collageState, selectedCellId, onAssignImage, forceEngine }, ref) => {
+    const { updateCell } = useCollage();
+    const useKonva = forceEngine
+      ? forceEngine === "konva"
+      : collageState.useKonvaCanvas !== false;
 
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-    // Calculate actual screen DPI (default to 96 DPI if not available)
-    const dpi = window.devicePixelRatio * 96;
-
-    // Use shared renderer for consistent dimensions
-    const canvasDimensions = CanvasRenderer.getCanvasDimensions(pageSize, dpi);
-    const cellDimensions = CanvasRenderer.getCellDimensions(
-      layout,
-      pageSize.margin,
-      dpi
-    );
-
-    // Render matrix-transformed preview onto high-res canvas
-    useEffect(() => {
-      if (canvasRef.current) {
-        CanvasRenderer.renderToCanvas(collageState, {
-          dpi,
-          targetCanvas: canvasRef.current,
-        });
-      }
-    }, [collageState, dpi]);
-
-    // Reset the selected image when the images change
-    useEffect(() => {
-      if (images.length === 0) {
-        setSelectedImageId(null);
-      } else if (images.length === 1 && !selectedImageId) {
-        setSelectedImageId(images[0].id);
-      }
-    }, [images, selectedImageId]);
-
-    const handleCellClick = (rowIndex: number, colIndex: number) => {
-      // Show image selection for this cell
-      setActiveCell({ row: rowIndex, col: colIndex });
-    };
-
-    const handleImageSelect = (imageId: string) => {
-      if (activeCell) {
-        onAssignImage(activeCell.row, activeCell.col, imageId);
-        setActiveCell(null); // Close the selection
-      }
-      setSelectedImageId(imageId);
-    };
-
-    const closeImageSelection = () => {
-      setActiveCell(null);
-    };
-
-    // Format dimensions according to selected unit
-    const formatDimension = (value: number): string => {
-      return UnitConverter.formatDimension(value, selectedUnit, 1);
-    };
+    if (!useKonva) {
+      return (
+        <LegacyCollageCanvas
+          ref={ref}
+          collageState={collageState}
+          selectedCellId={selectedCellId}
+          onAssignImage={onAssignImage}
+        />
+      );
+    }
 
     return (
-      <div className="flex flex-col items-center">
-        <div className="mb-4 relative">
-          <div
-            ref={ref}
-            className="bg-white shadow-md mx-auto"
-            style={{
-              width: `${canvasDimensions.width}px`,
-              height: `${canvasDimensions.height}px`,
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {/* Native Canvas preview driven by matrix transformation stack */}
-            <canvas
-              ref={canvasRef}
-              style={{
-                width: `${canvasDimensions.width}px`,
-                height: `${canvasDimensions.height}px`,
-                display: "block",
-              }}
-            />
-
-            {/* Interactive Cell Overlay for clicks */}
-            <div className="absolute inset-0">
-              {cells.map((row, rowIndex) =>
-                row.map((cell, colIndex) => {
-                  const hasImage = cell.imageId !== null;
-                  const cellPosition = CanvasRenderer.getCellPosition(
-                    rowIndex,
-                    colIndex,
-                    cellDimensions,
-                    rowGap,
-                    columnGap,
-                    dpi
-                  );
-
-                  return (
-                    <div
-                      key={cell.id}
-                      className={cn(
-                        "absolute cursor-pointer transition-colors hover:bg-primary/5",
-                        !hasImage && "bg-black/5 flex items-center justify-center"
-                      )}
-                      style={{
-                        width: `${cellPosition.width}px`,
-                        height: `${cellPosition.height}px`,
-                        left: `${cellPosition.left}px`,
-                        top: `${cellPosition.top}px`,
-                      }}
-                      onClick={() => handleCellClick(rowIndex, colIndex)}
-                    >
-                      {!hasImage && (
-                        <span className="text-xs text-muted-foreground select-none">
-                          Empty
-                        </span>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* Image selection popup */}
-          {activeCell && images.length > 0 && (
-            <div className="absolute bg-white border rounded-lg shadow-lg p-2 mt-2 z-10">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="text-sm font-medium">Select Image</h4>
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={closeImageSelection}
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                {images.map((image) => (
-                  <div
-                    key={image.id}
-                    className={cn(
-                      "p-1 border rounded cursor-pointer",
-                      selectedImageId === image.id && "ring-2 ring-primary"
-                    )}
-                    onClick={() => handleImageSelect(image.id)}
-                  >
-                    <img
-                      src={image.src}
-                      alt={image.name}
-                      className="w-full h-12 object-cover rounded"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="text-center text-sm text-muted-foreground mt-2">
-          <p>
-            {pageSize.label} - {formatDimension(pageSize.width)}×
-            {formatDimension(pageSize.height)}(
-            {cells.flat().filter((cell) => cell.imageId !== null).length} of{" "}
-            {rows * columns} cells filled)
-          </p>
-          <p className="text-xs mt-1">
-            Photo size: {formatDimension(layout.cellWidth)}×
-            {formatDimension(layout.cellHeight)}
-          </p>
-        </div>
-      </div>
+      <KonvaCollageCanvas
+        ref={ref}
+        collageState={collageState}
+        selectedCellId={selectedCellId}
+        onAssignImage={onAssignImage}
+        onUpdateCellTransform={(cellId, transform) => {
+          updateCell(cellId, { transform });
+        }}
+      />
     );
   }
 );
 
 CollageCanvas.displayName = "CollageCanvas";
+
