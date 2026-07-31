@@ -70,6 +70,7 @@ const HERO_DEMO_COLLAGE: CollageState = {
   spaceOptimization: "loose",
   showCuttingMarkers: true,
   markerColor: "#64748b",
+  markerSize: 5,
   selectedUnit: "mm",
   rowGap: 8,
   columnGap: 8,
@@ -132,7 +133,7 @@ export default function LandingPage() {
               )}
             </Button>
 
-            <Link to="/editor">
+            <Link to="/library">
               <Button size="sm" className="rounded-lg shadow-sm font-semibold gap-1.5 px-4">
                 Launch Studio
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -165,9 +166,9 @@ export default function LandingPage() {
 
             {/* Action Buttons */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/editor" className="w-full sm:w-auto">
+              <Link to="/library" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto px-8 h-12 text-base font-semibold rounded-lg shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all gap-2">
-                  Open Studio Editor
+                  Open Studio Library
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -273,9 +274,9 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <Link to="/editor" className="pt-4 border-t border-slate-800">
+                  <Link to="/library" className="pt-4 border-t border-slate-800">
                     <Button size="sm" className="w-full text-xs font-semibold gap-1 bg-indigo-600 hover:bg-indigo-500 text-white">
-                      Open Full Editor
+                      Open Studio Library
                       <ArrowRight className="h-3 w-3" />
                     </Button>
                   </Link>
@@ -522,7 +523,7 @@ export default function LandingPage() {
                     <p className="text-muted-foreground text-xs leading-relaxed">{template.desc}</p>
                   </div>
                   <div className="pt-4 mt-4 border-t border-border/60 flex items-center justify-between">
-                    <Link to="/editor" className="inline-flex items-center text-xs font-semibold text-primary hover:underline gap-1">
+                    <Link to="/library" className="inline-flex items-center text-xs font-semibold text-primary hover:underline gap-1">
                       Use in Studio
                       <ArrowRight className="h-3 w-3" />
                     </Link>
@@ -652,9 +653,9 @@ export default function LandingPage() {
                 Join creators and print enthusiasts making exact-dimension photo layouts with zero server lag.
               </p>
               <div className="pt-2">
-                <Link to="/editor">
+                <Link to="/library">
                   <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12 text-base font-semibold rounded-lg shadow-md gap-2">
-                    Launch Studio Editor
+                    Open Studio Library
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -679,7 +680,7 @@ export default function LandingPage() {
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
             <a href="#presets" className="hover:text-foreground transition-colors">Templates</a>
             <a href="#workflow" className="hover:text-foreground transition-colors">Workflow</a>
-            <Link to="/editor" className="hover:text-foreground transition-colors">Studio</Link>
+            <Link to="/library" className="hover:text-foreground transition-colors">Studio</Link>
           </div>
 
           <p>&copy; {new Date().getFullYear()} LayoutCrafter. All rights reserved.</p>
