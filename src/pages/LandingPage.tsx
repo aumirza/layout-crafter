@@ -10,7 +10,6 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { Link } from "react-router-dom";
 import {
-  Sparkles,
   LayoutGrid,
   Printer,
   Sliders,
@@ -21,56 +20,86 @@ import {
   Moon,
   Sun,
   Layout,
-  Maximize2,
   ShieldCheck,
   Check,
   ChevronRight,
-  SlidersHorizontal,
   Grid,
   MousePointerClick,
+  Ruler,
+  Scissors,
+  FileText,
+  Sparkles,
+  SlidersHorizontal,
+  Maximize2,
+  Square,
+  Sparkle,
 } from "lucide-react";
+import { CollageCanvas } from "@/components/CollageCanvas";
+import { CollageState } from "@/types/collage";
 
-// Mock photos for hero preview
-const MOCK_PHOTOS = [
-  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1439853949127-fa647821eba0?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=600&q=80",
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=600&q=80",
-];
-
-type LayoutPresetType = "grid-4" | "strip-3" | "hero-large" | "masonry-5";
+// Authentic default CollageState for Hero Live Canvas Preview
+const HERO_DEMO_COLLAGE: CollageState = {
+  pageSize: {
+    id: "a4",
+    name: "A4 Standard",
+    width: 210,
+    height: 297,
+    label: "A4 (210 × 297 mm)",
+    margin: 10,
+  },
+  layout: {
+    id: "grid-4",
+    name: "2×2 Grid",
+    cellWidth: 91,
+    cellHeight: 134.5,
+    label: "2×2 Equal",
+  },
+  images: [], // Clean empty placeholders as requested
+  cells: [
+    [
+      { id: "cell-0-0", imageId: null, orientation: "auto" },
+      { id: "cell-0-1", imageId: null, orientation: "auto" },
+    ],
+    [
+      { id: "cell-1-0", imageId: null, orientation: "auto" },
+      { id: "cell-1-1", imageId: null, orientation: "auto" },
+    ],
+  ],
+  rows: 2,
+  columns: 2,
+  spaceOptimization: "loose",
+  showCuttingMarkers: true,
+  markerColor: "#64748b",
+  selectedUnit: "mm",
+  rowGap: 8,
+  columnGap: 8,
+  gapsLinked: true,
+};
 
 export default function LandingPage() {
   const { theme, toggleTheme } = useTheme();
-  const [activePreset, setActivePreset] = useState<LayoutPresetType>("grid-4");
-  const [gapValue, setGapValue] = useState<number>(12);
-  const [radiusValue, setRadiusValue] = useState<number>(12);
   const [selectedTemplateTab, setSelectedTemplateTab] = useState<string>("all");
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary transition-colors duration-300 overflow-x-hidden">
-      {/* Background Decor Gradients */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-linear-to-tr from-primary/20 via-purple-500/10 to-blue-500/10 blur-[120px] rounded-full opacity-70 dark:opacity-40" />
-        <div className="absolute top-[40%] left-[-10%] w-[500px] h-[500px] bg-primary/10 blur-[100px] rounded-full" />
-        <div className="absolute top-[70%] right-[-10%] w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full" />
-      </div>
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary transition-colors duration-300 overflow-x-hidden antialiased">
+      {/* Precision Blueprint Grid Background (No AI Slop Gradients) */}
+      <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-70" />
 
       {/* Sticky Header Nav */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/75 border-b border-border/40 transition-all">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-background/85 border-b border-border/60 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 rounded-xl bg-linear-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm group-hover:scale-105 transition-transform">
               <Layout className="h-5 w-5" />
             </div>
-            <span className="font-extrabold text-xl tracking-tight bg-linear-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
-              Layout<span className="text-primary">Crafter</span>
-            </span>
-            <Badge variant="outline" className="hidden sm:inline-flex text-[10px] uppercase tracking-wider font-semibold py-0.5 px-2 border-primary/30 text-primary">
-              Pro Studio
-            </Badge>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-extrabold text-xl tracking-tight text-foreground">
+                Layout<span className="text-primary font-black">Crafter</span>
+              </span>
+              <Badge variant="outline" className="hidden sm:inline-flex text-[10px] uppercase tracking-wider font-semibold py-0.5 px-2 border-border text-muted-foreground">
+                Studio
+              </Badge>
+            </div>
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
@@ -93,7 +122,7 @@ export default function LandingPage() {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="rounded-full w-9 h-9 border border-border/50 hover:bg-accent"
+              className="rounded-lg w-9 h-9 border border-border/60 hover:bg-accent"
               aria-label="Toggle theme"
             >
               {theme === "dark" ? (
@@ -103,14 +132,8 @@ export default function LandingPage() {
               )}
             </Button>
 
-            <Link to="/editor" className="hidden sm:inline-flex">
-              <Button variant="outline" size="sm" className="rounded-full font-medium">
-                Sign In
-              </Button>
-            </Link>
-
             <Link to="/editor">
-              <Button size="sm" className="rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all gap-1.5 px-4 font-semibold">
+              <Button size="sm" className="rounded-lg shadow-sm font-semibold gap-1.5 px-4">
                 Launch Studio
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>
@@ -121,293 +144,186 @@ export default function LandingPage() {
 
       <main>
         {/* HERO SECTION */}
-        <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto space-y-6">
-            {/* Pill Announcement Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/10 text-xs font-semibold text-primary backdrop-blur-md shadow-sm hover:border-primary/40 transition-colors">
-              <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-              <span>Layout Crafter 2.0 • High-DPI Collage Engine</span>
-              <ChevronRight className="h-3 w-3" />
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-muted/50 text-xs font-medium text-foreground backdrop-blur-sm shadow-2xs">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span>High-Precision Photo Layout & Print Engine</span>
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] text-foreground">
-              Design Print-Ready Photo Collages{" "}
-              <span className="bg-linear-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent">
-                in Seconds
-              </span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.12] text-foreground">
+              Design Print-Ready Photo Collages with Millimeter Precision
             </h1>
 
             {/* Subhead */}
             <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto font-normal">
-              The intuitive layout studio for creators, photographers, and print enthusiasts.
-              Arrange photos, fine-tune grid ratios, and export high-resolution PDFs with millimeter precision.
+              Arrange photos into exact physical grid layouts. Control margins, gaps, cutting markers, and export print-ready PDFs directly in your browser.
             </p>
 
             {/* Action Buttons */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/editor" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full sm:w-auto px-8 h-12 text-base font-semibold rounded-full shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all gap-2">
-                  Start Creating Free
+                <Button size="lg" className="w-full sm:w-auto px-8 h-12 text-base font-semibold rounded-lg shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all gap-2">
+                  Open Studio Editor
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
 
               <a href="#demo-preview" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto px-7 h-12 text-base font-medium rounded-full border-border/80 hover:bg-accent/60 gap-2">
-                  <LayoutGrid className="h-4 w-4 text-primary" />
-                  Try Interactive Demo
+                <Button size="lg" variant="outline" className="w-full sm:w-auto px-7 h-12 text-base font-medium rounded-lg border-border hover:bg-accent gap-2">
+                  <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+                  View Studio Canvas
                 </Button>
               </a>
             </div>
 
             {/* Trust Badges */}
-            <div className="pt-6 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs text-muted-foreground font-medium">
+            <div className="pt-4 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs text-muted-foreground font-medium">
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <span>100% Free & Client-Side</span>
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>100% Client-Side Privacy</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <span>300 DPI Print Precision</span>
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>300 DPI Export Engine</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <span>Standard A4 / 4x6 / Letter Sizes</span>
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Standard A4 / Letter / Custom Sizes</span>
               </div>
             </div>
           </div>
 
-          {/* APP SHOWCASE MOCKUP (INTERACTIVE DEMO) */}
-          <div id="demo-preview" className="mt-14 md:mt-20 max-w-5xl mx-auto">
-            <div className="relative rounded-2xl border border-border/60 bg-card/80 backdrop-blur-xl shadow-2xl shadow-primary/10 overflow-hidden group">
-              {/* SaaS Browser Header Bar */}
-              <div className="h-11 bg-muted/60 border-b border-border/60 px-4 flex items-center justify-between">
+          {/* AUTHENTIC EDITOR UI SHOWCASE (REAL CANVAS PREVIEW) */}
+          <div id="demo-preview" className="mt-12 md:mt-16 max-w-5xl mx-auto">
+            <div className="rounded-xl border border-border bg-card shadow-2xl overflow-hidden">
+              {/* Studio Window Title Bar */}
+              <div className="h-10 bg-muted/80 border-b border-border px-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-red-500/80" />
                   <div className="w-3 h-3 rounded-full bg-amber-500/80" />
                   <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                  <span className="ml-2 text-xs font-medium text-muted-foreground hidden sm:inline-block">
-                    Layout Studio • Live Sandbox
+                  <span className="ml-2 text-xs font-semibold text-foreground/80 hidden sm:inline-block">
+                    Layout Studio • Live Editor Canvas
                   </span>
                 </div>
 
-                <div className="bg-background/80 border border-border/40 rounded-md px-3 py-1 text-[11px] font-mono text-muted-foreground flex items-center gap-1.5 shadow-inner">
-                  <ShieldCheck className="h-3 w-3 text-emerald-500" />
-                  layoutcrafter.app/studio
-                </div>
-
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-[10px] font-mono">
+                  <Badge variant="outline" className="text-[11px] font-mono bg-background text-foreground border-border px-2.5 py-0.5">
+                    <span className="text-primary font-bold mr-1">A4</span> 210 × 297 mm
+                  </Badge>
+                  <Badge className="text-[10px] font-mono bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
                     300 DPI READY
                   </Badge>
                 </div>
               </div>
 
-              {/* Interactive Sandbox Layout Body */}
-              <div className="p-4 sm:p-6 md:p-8 bg-linear-to-b from-card to-background grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                {/* Left Side: Dynamic Controls Panel */}
-                <div className="lg:col-span-4 space-y-5 bg-muted/40 p-4 rounded-xl border border-border/40">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
-                      Live Canvas Adjuster
-                    </span>
-                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-mono font-semibold">
-                      Interactive
-                    </span>
-                  </div>
+              {/* Editor Workspace Shell */}
+              <div className="grid grid-cols-1 md:grid-cols-12 min-h-[460px] bg-slate-950 text-slate-100">
+                {/* Left Mini Sidebar */}
+                <div className="hidden md:flex md:col-span-3 border-r border-slate-800 bg-slate-900/90 p-4 flex-col justify-between text-xs">
+                  <div className="space-y-4">
+                    <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
+                      <SlidersHorizontal className="h-3.5 w-3.5 text-indigo-400" />
+                      Studio Controls
+                    </div>
 
-                  {/* Preset Selector Buttons */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-foreground">Select Grid Preset</label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[
-                        { id: "grid-4", label: "2x2 Classic", icon: LayoutGrid },
-                        { id: "strip-3", label: "Photo Strip", icon: Grid },
-                        { id: "hero-large", label: "Hero Focus", icon: Maximize2 },
-                        { id: "masonry-5", label: "Gallery Spread", icon: Layers },
-                      ].map((preset) => {
-                        const IconComponent = preset.icon;
-                        const isSelected = activePreset === preset.id;
-                        return (
-                          <button
-                            key={preset.id}
-                            onClick={() => setActivePreset(preset.id as LayoutPresetType)}
-                            className={`flex items-center gap-2 p-2 rounded-lg text-xs font-medium transition-all text-left border ${
-                              isSelected
-                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                : "bg-card hover:bg-accent border-border/60 text-muted-foreground hover:text-foreground"
-                            }`}
-                          >
-                            <IconComponent className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">{preset.label}</span>
-                          </button>
-                        );
-                      })}
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-slate-300">Page Presets</label>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between px-2.5 py-1.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-medium">
+                          <span className="flex items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5" /> A4 Paper
+                          </span>
+                          <span className="text-[10px] font-mono">210×297mm</span>
+                        </div>
+                        <div className="flex items-center justify-between px-2.5 py-1.5 rounded bg-slate-800/60 text-slate-400 text-xs hover:text-slate-200">
+                          <span className="flex items-center gap-1.5">
+                            <Square className="h-3.5 w-3.5" /> 4×6" Print
+                          </span>
+                          <span className="text-[10px] font-mono">102×152mm</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-800">
+                      <label className="text-xs font-medium text-slate-300">Grid Division</label>
+                      <div className="grid grid-cols-2 gap-1.5 text-center">
+                        <div className="p-2 rounded bg-indigo-600 text-white font-medium text-xs">
+                          2 × 2 Grid
+                        </div>
+                        <div className="p-2 rounded bg-slate-800 text-slate-400 font-medium text-xs">
+                          3 × 3 Grid
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-800">
+                      <div className="flex justify-between text-slate-300 text-xs">
+                        <span>Cut Markers</span>
+                        <span className="text-emerald-400 font-mono font-semibold">Enabled</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300 text-xs">
+                        <span>Margin / Gaps</span>
+                        <span className="text-slate-400 font-mono">8 mm</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Gap Range Slider */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-medium text-muted-foreground">Grid Gap</span>
-                      <span className="font-mono text-primary font-bold">{gapValue}px</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="24"
-                      value={gapValue}
-                      onChange={(e) => setGapValue(Number(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                  </div>
-
-                  {/* Corner Radius Slider */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-medium text-muted-foreground">Corner Radius</span>
-                      <span className="font-mono text-primary font-bold">{radiusValue}px</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="24"
-                      value={radiusValue}
-                      onChange={(e) => setRadiusValue(Number(e.target.value))}
-                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                  </div>
-
-                  {/* Quick Editor Launch Button */}
-                  <Link to="/editor" className="block pt-2">
-                    <Button size="sm" className="w-full rounded-lg text-xs font-semibold gap-1.5 shadow-md">
-                      Open Full Editor with this Layout
+                  <Link to="/editor" className="pt-4 border-t border-slate-800">
+                    <Button size="sm" className="w-full text-xs font-semibold gap-1 bg-indigo-600 hover:bg-indigo-500 text-white">
+                      Open Full Editor
                       <ArrowRight className="h-3 w-3" />
                     </Button>
                   </Link>
                 </div>
 
-                {/* Right Side: Live Canvas Rendering Box */}
-                <div className="lg:col-span-8 bg-muted/20 border border-border/50 rounded-xl p-4 sm:p-6 min-h-[320px] flex items-center justify-center relative overflow-hidden shadow-inner">
-                  <div
-                    className="w-full max-w-md bg-card p-3 rounded-xl border border-border/60 shadow-lg transition-all duration-300"
-                    style={{
-                      padding: `${Math.max(6, gapValue)}px`,
-                    }}
-                  >
-                    {/* Render Preset 1: Grid 2x2 */}
-                    {activePreset === "grid-4" && (
-                      <div
-                        className="grid grid-cols-2 gap-2 transition-all"
-                        style={{ gap: `${gapValue}px` }}
-                      >
-                        {MOCK_PHOTOS.slice(0, 4).map((src, idx) => (
-                          <div
-                            key={idx}
-                            className="aspect-square overflow-hidden bg-muted relative group/item"
-                            style={{ borderRadius: `${radiusValue}px` }}
-                          >
-                            <img
-                              src={src}
-                              alt={`Sample ${idx + 1}`}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center">
-                              <Badge className="text-[9px] bg-background/90 text-foreground shadow-sm">
-                                Photo #{idx + 1}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                {/* Right Workspace with Measurement Rulers & Real Canvas */}
+                <div className="md:col-span-9 flex flex-col relative overflow-hidden bg-slate-950">
+                  {/* Top Measurement Ruler */}
+                  <div className="h-6 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-8 text-[9px] font-mono text-slate-400 select-none">
+                    <span>0 mm</span>
+                    <span>52 mm</span>
+                    <span>105 mm</span>
+                    <span>157 mm</span>
+                    <span>210 mm</span>
+                  </div>
 
-                    {/* Render Preset 2: Photo Strip */}
-                    {activePreset === "strip-3" && (
-                      <div
-                        className="grid grid-cols-1 sm:grid-cols-3 gap-2 transition-all"
-                        style={{ gap: `${gapValue}px` }}
-                      >
-                        {MOCK_PHOTOS.slice(0, 3).map((src, idx) => (
-                          <div
-                            key={idx}
-                            className="aspect-3/4 overflow-hidden bg-muted relative group/item"
-                            style={{ borderRadius: `${radiusValue}px` }}
-                          >
-                            <img
-                              src={src}
-                              alt={`Sample Strip ${idx + 1}`}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  {/* Canvas Viewport Area */}
+                  <div className="flex-1 flex relative items-center justify-center p-6 sm:p-8 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:20px_20px]">
+                    {/* Left Ruler */}
+                    <div className="absolute left-0 top-0 bottom-0 w-6 bg-slate-900 border-r border-slate-800 flex flex-col justify-between py-6 text-[9px] font-mono text-slate-400 items-center select-none">
+                      <span>0</span>
+                      <span>148</span>
+                      <span>297</span>
+                    </div>
 
-                    {/* Render Preset 3: Hero Featured */}
-                    {activePreset === "hero-large" && (
-                      <div
-                        className="grid grid-cols-3 gap-2 transition-all"
-                        style={{ gap: `${gapValue}px` }}
-                      >
-                        <div
-                          className="col-span-2 row-span-2 aspect-4/3 overflow-hidden bg-muted relative group/item"
-                          style={{ borderRadius: `${radiusValue}px` }}
-                        >
-                          <img
-                            src={MOCK_PHOTOS[0]}
-                            alt="Hero Sample"
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110"
-                          />
-                        </div>
-                        <div
-                          className="aspect-square overflow-hidden bg-muted relative group/item"
-                          style={{ borderRadius: `${radiusValue}px` }}
-                        >
-                          <img
-                            src={MOCK_PHOTOS[1]}
-                            alt="Side 1"
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110"
-                          />
-                        </div>
-                        <div
-                          className="aspect-square overflow-hidden bg-muted relative group/item"
-                          style={{ borderRadius: `${radiusValue}px` }}
-                        >
-                          <img
-                            src={MOCK_PHOTOS[2]}
-                            alt="Side 2"
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110"
-                          />
-                        </div>
-                      </div>
-                    )}
+                    {/* Real Collage Canvas Component Container */}
+                    <div className="shadow-2xl rounded border border-slate-800 bg-white p-2 max-w-[280px] sm:max-w-[320px] transition-transform">
+                      <CollageCanvas
+                        collageState={HERO_DEMO_COLLAGE}
+                        onAssignImage={() => {}}
+                      />
+                    </div>
+                  </div>
 
-                    {/* Render Preset 4: Gallery Spread */}
-                    {activePreset === "masonry-5" && (
-                      <div
-                        className="grid grid-cols-3 gap-2 transition-all"
-                        style={{ gap: `${gapValue}px` }}
-                      >
-                        {MOCK_PHOTOS.slice(0, 5).map((src, idx) => (
-                          <div
-                            key={idx}
-                            className={`overflow-hidden bg-muted relative group/item ${
-                              idx === 0 ? "col-span-2 aspect-16/10" : "aspect-square"
-                            }`}
-                            style={{ borderRadius: `${radiusValue}px` }}
-                          >
-                            <img
-                              src={src}
-                              alt={`Spread ${idx + 1}`}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  {/* Bottom Viewport Control Strip */}
+                  <div className="h-8 bg-slate-900 border-t border-slate-800 px-4 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1 text-slate-300">
+                        <Ruler className="h-3 w-3 text-indigo-400" /> mm
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Scissors className="h-3 w-3 text-slate-400" /> Markers: On
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-300">Zoom: 100%</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -415,134 +331,133 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* SAAS STATS STRIP */}
-        <section className="border-y border-border/40 bg-card/40 py-8 px-4 backdrop-blur-sm">
+        {/* STATS STRIP */}
+        <section className="border-y border-border/60 bg-muted/30 py-8 px-4">
           <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="space-y-1">
               <p className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">300 DPI</p>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Print Export Quality</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Print Export Resolution</p>
             </div>
             <div className="space-y-1">
               <p className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">0 ms</p>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Server Lag (Local)</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Server Lag (Client-Side)</p>
             </div>
             <div className="space-y-1">
               <p className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">100%</p>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Free & Privacy-First</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Private & Free</p>
             </div>
             <div className="space-y-1">
-              <p className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">Infinite</p>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Custom Layout Ratios</p>
+              <p className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">Exact mm</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Physical Dimension Control</p>
             </div>
           </div>
         </section>
 
         {/* FEATURE BENTO GRID SECTION */}
-        <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
-            <Badge variant="outline" className="text-xs font-semibold px-3 py-1 border-primary/30 text-primary">
+            <Badge variant="outline" className="text-xs font-semibold px-3 py-1 border-border text-foreground">
               Core Capabilities
             </Badge>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Everything You Need for Perfect Layouts
+              Built for High-Precision Print & Layout Crafts
             </h2>
             <p className="text-muted-foreground text-base">
-              Engineered with pixel perfection, intuitive alignment helpers, and instant high-res rendering.
+              Intuitive paper configuration, custom grid math, live cut markers, and crisp vector PDF generation.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Bento Card 1 */}
-            <div className="md:col-span-2 rounded-2xl border border-border/60 bg-linear-to-br from-card via-card to-primary/5 p-6 sm:p-8 hover:border-primary/50 transition-all duration-300 shadow-md group">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <LayoutGrid className="h-6 w-6" />
+            <div className="md:col-span-2 rounded-xl border border-border bg-card p-6 sm:p-8 hover:border-primary/40 transition-all shadow-xs group">
+              <div className="h-11 w-11 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <LayoutGrid className="h-5.5 w-5.5" />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-foreground">Smart Grid & Custom Dimensions</h3>
+              <h3 className="text-xl font-bold mb-2 text-foreground">Physical Paper Sizing & Millimeter Control</h3>
               <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                Choose standard paper presets like A4, Letter, 4x6", 5x7" or define millimeter-exact custom dimensions.
-                Easily specify row counts, columns, and automatic aspect ratio locks.
+                Choose standard paper sizes (A4, A3, Letter, 4x6" photo prints) or enter exact physical width, height, and margin inputs in millimeters, inches, or pixels.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary" className="text-xs">A4 & Letter Standard</Badge>
-                <Badge variant="secondary" className="text-xs">Photo Print 4x6" / 5x7"</Badge>
-                <Badge variant="secondary" className="text-xs">Custom mm / inch / px</Badge>
+                <Badge variant="secondary" className="text-xs">4×6" & 5×7" Photo Paper</Badge>
+                <Badge variant="secondary" className="text-xs">Custom mm / in / px</Badge>
               </div>
             </div>
 
             {/* Bento Card 2 */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 hover:border-primary/50 transition-all duration-300 shadow-md group">
-              <div className="h-12 w-12 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Printer className="h-6 w-6" />
+            <div className="rounded-xl border border-border bg-card p-6 sm:p-8 hover:border-primary/40 transition-all shadow-xs group">
+              <div className="h-11 w-11 rounded-lg bg-slate-900 text-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <Printer className="h-5.5 w-5.5" />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-foreground">Ultra High-DPI Export</h3>
+              <h3 className="text-xl font-bold mb-2 text-foreground">300+ DPI Crisp PDF & PNG Export</h3>
               <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                Export ultra-crisp vector PDFs or high-resolution PNGs ready to send straight to home printers or professional print shops.
+                Export vector PDF documents or ultra high-resolution PNG files ready to send directly to your home printer or professional print service.
               </p>
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-500">
-                <Check className="h-3.5 w-3.5" /> Up to 300+ DPI Crisp Output
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <Check className="h-3.5 w-3.5" /> High-Resolution Output
               </div>
             </div>
 
             {/* Bento Card 3 */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 hover:border-primary/50 transition-all duration-300 shadow-md group">
-              <div className="h-12 w-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Sliders className="h-6 w-6" />
+            <div className="rounded-xl border border-border bg-card p-6 sm:p-8 hover:border-primary/40 transition-all shadow-xs group">
+              <div className="h-11 w-11 rounded-lg bg-slate-900 text-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <Sliders className="h-5.5 w-5.5" />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-foreground">Live Spacing & Radius Controls</h3>
+              <h3 className="text-xl font-bold mb-2 text-foreground">Live Spacing & Cut Marker Overlay</h3>
               <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                Tweak outer margins, grid gaps, corner roundness, border strokes, and background colors with real-time feedback.
+                Adjust outer margins, inner row/column gaps, and toggle visible corner cut markers for easy post-print trimming.
               </p>
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-500">
-                <Check className="h-3.5 w-3.5" /> Dynamic Live Sliders
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                <Check className="h-3.5 w-3.5" /> Precision Cutting Lines
               </div>
             </div>
 
             {/* Bento Card 4 */}
-            <div className="md:col-span-2 rounded-2xl border border-border/60 bg-linear-to-tr from-card via-card to-purple-500/5 p-6 sm:p-8 hover:border-primary/50 transition-all duration-300 shadow-md group">
-              <div className="h-12 w-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <ShieldCheck className="h-6 w-6" />
+            <div className="md:col-span-2 rounded-xl border border-border bg-card p-6 sm:p-8 hover:border-primary/40 transition-all shadow-xs group">
+              <div className="h-11 w-11 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <ShieldCheck className="h-5.5 w-5.5" />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-foreground">100% Private & Client-Side</h3>
+              <h3 className="text-xl font-bold mb-2 text-foreground">100% Private & Client-Side Processing</h3>
               <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                Your personal memories and high-res photos never leave your device. All image processing, canvas operations, and PDF exports run directly inside your browser.
+                Your images and photos remain strictly on your local machine. Canvas generation, matrix transformations, and PDF exports run offline right inside your browser context.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary" className="text-xs">No Server Uploads</Badge>
-                <Badge variant="secondary" className="text-xs">Instant Processing</Badge>
-                <Badge variant="secondary" className="text-xs">Offline Compatible</Badge>
+                <Badge variant="secondary" className="text-xs">Zero Data Tracking</Badge>
+                <Badge variant="secondary" className="text-xs">Works Offline</Badge>
               </div>
             </div>
           </div>
         </section>
 
-        {/* TEMPLATES / PRESET SHOWCASE SECTION */}
-        <section id="presets" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-muted/30 rounded-3xl border border-border/40 my-12">
+        {/* READY-TO-USE PRESETS SECTION */}
+        <section id="presets" className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-muted/30 rounded-2xl border border-border/60 my-12">
           <div className="text-center max-w-2xl mx-auto space-y-4 mb-12">
-            <Badge variant="outline" className="text-xs font-semibold px-3 py-1 border-primary/30 text-primary">
-              Ready-to-Use Presets
+            <Badge variant="outline" className="text-xs font-semibold px-3 py-1 border-border text-foreground">
+              Layout Presets
             </Badge>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Collage Styles for Every Memory
+              Grid Templates for Every Project
             </h2>
             <p className="text-muted-foreground text-base">
-              Start from scratch or pick a pre-configured design template optimized for prints, albums, and social posts.
+              Start with standardized grid templates tailored for photo prints, albums, wall framing, and square grids.
             </p>
 
             {/* Tab Filter */}
             <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
               {[
-                { id: "all", label: "All Templates" },
-                { id: "print", label: "Print & Framing" },
+                { id: "all", label: "All Layouts" },
+                { id: "print", label: "Standard Prints" },
+                { id: "grid", label: "Equal Grids" },
                 { id: "strip", label: "Photo Strips" },
-                { id: "social", label: "Social & Square" },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setSelectedTemplateTab(tab.id)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     selectedTemplateTab === tab.id
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-card text-muted-foreground hover:text-foreground hover:bg-accent border border-border/50"
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "bg-card text-muted-foreground hover:text-foreground border border-border"
                   }`}
                 >
                   {tab.label}
@@ -554,71 +469,61 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                title: "Classic 4-Photo Square",
-                desc: "Equal 2x2 grid layout ideal for standard 6x6 square photo prints.",
-                img: MOCK_PHOTOS[0],
-                badge: "Popular",
-                category: "print",
+                title: "Classic 2×2 Photo Grid",
+                desc: "Equal 4-cell layout optimized for 4x6 or A4 print sheets.",
+                category: "grid",
+                badge: "Standard",
               },
               {
-                title: "Vertical Film Strip",
-                desc: "3-photo vertical stack mimicking nostalgic photobooth film strips.",
-                img: MOCK_PHOTOS[1],
-                badge: "Trending",
+                title: "Vertical 3-Strip Photobooth",
+                desc: "3-photo vertical stack designed for strip printing and memories.",
                 category: "strip",
+                badge: "Popular",
               },
               {
-                title: "Featured Memory Spread",
-                desc: "One dominant focal photo paired with two side support snapshots.",
-                img: MOCK_PHOTOS[2],
-                badge: "Editor's Choice",
-                category: "social",
+                title: "Equal 3×3 Grid Matrix",
+                desc: "9-cell high-density grid engineered for photo cataloging.",
+                category: "grid",
+                badge: "High Capacity",
               },
               {
-                title: "Wall Gallery Grid",
-                desc: "6-item high density grid engineered for A4 wall frame collages.",
-                img: MOCK_PHOTOS[3],
+                title: "A4 Wall Frame Grid",
+                desc: "Balanced multi-photo composition structured for wall frames.",
+                category: "print",
                 badge: "A4 Print",
+              },
+              {
+                title: "Panoramic Horizontal Trio",
+                desc: "Wide aspect cell arrangement ideal for landscape snapshots.",
                 category: "print",
+                badge: "Landscape",
               },
               {
-                title: "Triple Landscape Row",
-                desc: "Horizontal panorama layout for panoramic view photos and travel logs.",
-                img: MOCK_PHOTOS[4],
-                badge: "Wide",
-                category: "social",
-              },
-              {
-                title: "Minimalist Bordered Trio",
-                desc: "Clean wide margins with refined image gap spacing for modern art prints.",
-                img: MOCK_PHOTOS[5],
+                title: "Bordered Trio Spread",
+                desc: "Clean outer margins with generous gaps for art prints.",
+                category: "print",
                 badge: "Minimalist",
-                category: "print",
               },
             ]
               .filter((item) => selectedTemplateTab === "all" || item.category === selectedTemplateTab)
               .map((template, idx) => (
                 <div
                   key={idx}
-                  className="bg-card rounded-xl border border-border/60 overflow-hidden hover:border-primary/50 transition-all duration-300 shadow-sm group hover:-translate-y-1"
+                  className="bg-card rounded-xl border border-border p-6 hover:border-primary/40 transition-all shadow-xs flex flex-col justify-between"
                 >
-                  <div className="aspect-16/10 overflow-hidden bg-muted relative">
-                    <img
-                      src={template.img}
-                      alt={template.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute top-3 right-3">
-                      <Badge className="bg-background/90 text-foreground font-semibold text-[10px] shadow-sm">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-[10px] font-mono text-muted-foreground border-border">
                         {template.badge}
                       </Badge>
+                      <Layout className="h-4 w-4 text-muted-foreground" />
                     </div>
-                  </div>
-                  <div className="p-5 space-y-3">
                     <h3 className="font-bold text-base text-foreground">{template.title}</h3>
                     <p className="text-muted-foreground text-xs leading-relaxed">{template.desc}</p>
-                    <Link to="/editor" className="inline-flex items-center text-xs font-semibold text-primary hover:underline gap-1 pt-1">
-                      Use Preset in Studio
+                  </div>
+                  <div className="pt-4 mt-4 border-t border-border/60 flex items-center justify-between">
+                    <Link to="/editor" className="inline-flex items-center text-xs font-semibold text-primary hover:underline gap-1">
+                      Use in Studio
                       <ArrowRight className="h-3 w-3" />
                     </Link>
                   </div>
@@ -630,35 +535,35 @@ export default function LandingPage() {
         {/* HOW IT WORKS SECTION */}
         <section id="workflow" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
-            <Badge variant="outline" className="text-xs font-semibold px-3 py-1 border-primary/30 text-primary">
-              Simple 3-Step Workflow
+            <Badge variant="outline" className="text-xs font-semibold px-3 py-1 border-border text-foreground">
+              3-Step Workflow
             </Badge>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-              From Idea to Print in Minutes
+              From Concept to Print in Minutes
             </h2>
             <p className="text-muted-foreground text-base">
-              No complex design tools required. Crafting photo collages is fast and intuitive.
+              No complex design software needed. Create clean photo grid layouts effortlessly.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
                 step: "01",
-                title: "Choose Canvas & Ratios",
-                desc: "Select standard print paper dimensions or set custom width, height, and grid counts.",
+                title: "Select Canvas & Paper Size",
+                desc: "Choose from standard print paper sizes (A4, Letter, 4x6) or specify custom width, height, and margins in millimeters.",
                 icon: MousePointerClick,
               },
               {
                 step: "02",
-                title: "Drop & Arrange Photos",
-                desc: "Drag your photos onto the canvas. Adjust gaps, padding, corner roundedness, and crop focal points.",
+                title: "Arrange & Fine-Tune Gaps",
+                desc: "Position your photos into grid cells. Adjust row gaps, column spacing, image fit modes, and orientation locks.",
                 icon: Sliders,
               },
               {
                 step: "03",
-                title: "Export High-Res PDF",
-                desc: "Click export to download print-ready 300 DPI PDF or PNG files ready for your home printer.",
+                title: "Export Print-Ready PDF",
+                desc: "Export 300 DPI high-resolution PDF or PNG files complete with corner cutting markers ready for printing.",
                 icon: Download,
               },
             ].map((st, i) => {
@@ -666,13 +571,13 @@ export default function LandingPage() {
               return (
                 <div
                   key={i}
-                  className="bg-card rounded-2xl border border-border/60 p-8 relative flex flex-col justify-between hover:border-primary/40 transition-colors shadow-sm"
+                  className="bg-card rounded-xl border border-border p-8 flex flex-col justify-between hover:border-primary/40 transition-colors shadow-xs"
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-3xl font-black text-primary/40">{st.step}</span>
-                      <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                        <IconComp className="h-5 w-5" />
+                      <span className="font-mono text-2xl font-bold text-primary">{st.step}</span>
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                        <IconComp className="h-4.5 w-4.5" />
                       </div>
                     </div>
                     <h3 className="text-xl font-bold text-foreground">{st.title}</h3>
@@ -687,70 +592,69 @@ export default function LandingPage() {
         {/* FAQ SECTION */}
         <section id="faq" className="py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
           <div className="text-center space-y-4 mb-12">
-            <Badge variant="outline" className="text-xs font-semibold px-3 py-1 border-primary/30 text-primary">
-              Got Questions?
+            <Badge variant="outline" className="text-xs font-semibold px-3 py-1 border-border text-foreground">
+              Frequently Asked Questions
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">Frequently Asked Questions</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Got Questions?</h2>
             <p className="text-muted-foreground text-sm">Everything you need to know about Layout Crafter.</p>
           </div>
 
           <Accordion type="single" collapsible className="w-full space-y-3">
-            <AccordionItem value="item-1" className="border border-border/60 rounded-xl px-4 bg-card">
+            <AccordionItem value="item-1" className="border border-border rounded-xl px-4 bg-card">
               <AccordionTrigger className="text-sm font-semibold hover:no-underline py-4">
                 Is Layout Crafter free to use?
               </AccordionTrigger>
               <AccordionContent className="text-xs text-muted-foreground leading-relaxed pb-4">
-                Yes! Layout Crafter is 100% free with no watermarks or hidden export limits. All features including high-res PDF export are freely accessible.
+                Yes! Layout Crafter is 100% free with no watermarks or artificial export restrictions. All features including 300 DPI PDF export are fully accessible.
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-2" className="border border-border/60 rounded-xl px-4 bg-card">
+            <AccordionItem value="item-2" className="border border-border rounded-xl px-4 bg-card">
               <AccordionTrigger className="text-sm font-semibold hover:no-underline py-4">
-                Are my uploaded photos sent to any server?
+                Are my uploaded photos sent to external servers?
               </AccordionTrigger>
               <AccordionContent className="text-xs text-muted-foreground leading-relaxed pb-4">
-                No. All image loading, canvas rendering, grid adjustments, and file generation happen entirely in your browser using modern Web APIs. Your images stay completely private on your machine.
+                No. All image loading, canvas rendering, grid adjustments, and file downloads happen locally in your browser using modern Web Canvas APIs. Your photos remain completely private on your device.
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-3" className="border border-border/60 rounded-xl px-4 bg-card">
+            <AccordionItem value="item-3" className="border border-border rounded-xl px-4 bg-card">
               <AccordionTrigger className="text-sm font-semibold hover:no-underline py-4">
                 What file formats can I export?
               </AccordionTrigger>
               <AccordionContent className="text-xs text-muted-foreground leading-relaxed pb-4">
-                You can export high-resolution PDF documents (perfect for standard home & professional printing) as well as high-DPI PNG images for digital sharing.
+                You can export high-resolution PDF files (ready for home & commercial printing) as well as high-DPI PNG image files.
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-4" className="border border-border/60 rounded-xl px-4 bg-card">
+            <AccordionItem value="item-4" className="border border-border rounded-xl px-4 bg-card">
               <AccordionTrigger className="text-sm font-semibold hover:no-underline py-4">
-                Can I specify exact paper sizes like A4 or 4x6"?
+                Can I specify exact paper sizes like A4 or 4×6"?
               </AccordionTrigger>
               <AccordionContent className="text-xs text-muted-foreground leading-relaxed pb-4">
-                Absolutely. The editor comes built-in with preset paper sizes (A4, Letter, 4x6 photo paper, 5x7 art print) and supports custom unit inputs in millimeters, inches, or pixels.
+                Yes. The editor includes built-in paper size presets (A4, Letter, 4x6, 5x7) and supports custom physical measurements in millimeters, inches, or pixels.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
         </section>
 
-        {/* HIGH-CONVERSION CTA BANNER */}
+        {/* CTA BANNER */}
         <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="relative rounded-3xl bg-linear-to-r from-primary via-purple-600 to-blue-600 p-8 sm:p-12 md:p-16 text-primary-foreground text-center overflow-hidden shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,var(--tw-gradient-stops))] from-white/10 to-transparent pointer-events-none" />
-            <div className="relative max-w-2xl mx-auto space-y-6">
-              <Badge className="bg-white/20 text-white hover:bg-white/30 backdrop-blur-md border-0 text-xs font-semibold px-3 py-1">
-                Start Building Now
+          <div className="rounded-2xl bg-slate-900 text-slate-100 border border-slate-800 p-8 sm:p-12 text-center shadow-xl">
+            <div className="max-w-2xl mx-auto space-y-6">
+              <Badge variant="outline" className="border-slate-700 text-slate-300 text-xs font-semibold px-3 py-1">
+                Start Creating Now
               </Badge>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
-                Ready to Craft Your Next Photo Collage?
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+                Ready to Craft Your Photo Layout?
               </h2>
-              <p className="text-white/80 text-base sm:text-lg">
-                Join thousands of creators making print-perfect photo layouts effortlessly.
+              <p className="text-slate-400 text-base">
+                Join creators and print enthusiasts making exact-dimension photo layouts with zero server lag.
               </p>
               <div className="pt-2">
                 <Link to="/editor">
-                  <Button size="lg" className="bg-white text-foreground hover:bg-white/90 px-8 h-12 text-base font-bold rounded-full shadow-xl hover:scale-105 transition-all gap-2">
-                    Launch Layout Studio
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12 text-base font-semibold rounded-lg shadow-md gap-2">
+                    Launch Studio Editor
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -761,19 +665,19 @@ export default function LandingPage() {
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t border-border/40 bg-card/60 pt-12 pb-8 px-4 sm:px-6 lg:px-8">
+      <footer className="border-t border-border bg-card py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
+            <div className="h-6 w-6 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
               LC
             </div>
             <span className="font-bold text-foreground text-sm">LayoutCrafter</span>
-            <span>• High-DPI Photo Collage Maker</span>
+            <span>• High-Precision Photo Grid Maker</span>
           </div>
 
           <div className="flex items-center gap-6">
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-            <a href="#presets" className="hover:text-foreground transition-colors">Presets</a>
+            <a href="#presets" className="hover:text-foreground transition-colors">Templates</a>
             <a href="#workflow" className="hover:text-foreground transition-colors">Workflow</a>
             <Link to="/editor" className="hover:text-foreground transition-colors">Studio</Link>
           </div>
