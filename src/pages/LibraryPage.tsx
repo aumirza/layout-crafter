@@ -221,27 +221,27 @@ export default function LibraryPage() {
 
       {/* Header Bar */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-background/85 border-b border-border/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm group-hover:scale-105 transition-transform">
-              <Layout className="h-5 w-5" />
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm group-hover:scale-105 transition-transform">
+              <Layout className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="font-extrabold text-xl tracking-tight text-foreground">
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-foreground">
                 Layout<span className="text-primary font-black">Crafter</span>
               </span>
-              <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-semibold py-0.5 px-2 border-border text-muted-foreground">
+              <Badge variant="outline" className="hidden sm:inline-flex text-[10px] uppercase tracking-wider font-semibold py-0.5 px-2 border-border text-muted-foreground">
                 Library Hub
               </Badge>
             </div>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="rounded-lg w-9 h-9 border border-border/60 hover:bg-accent"
+              className="rounded-lg w-8 h-8 sm:w-9 sm:h-9 border border-border/60 hover:bg-accent"
               aria-label="Toggle theme"
             >
               {theme === "dark" ? (
@@ -255,19 +255,21 @@ export default function LibraryPage() {
               variant="outline"
               size="sm"
               onClick={() => setImportOpen(true)}
-              className="hidden sm:inline-flex rounded-lg text-xs font-semibold gap-1.5"
+              className="rounded-lg text-xs font-semibold h-8 sm:h-9 px-2.5 sm:px-3 gap-1.5"
+              title="Import File"
             >
               <Upload className="h-3.5 w-3.5" />
-              Import File
+              <span className="hidden sm:inline">Import File</span>
             </Button>
 
             <Button
               size="sm"
               onClick={() => setNewProjectOpen(true)}
-              className="rounded-lg shadow-sm font-semibold gap-1.5 px-4"
+              className="rounded-lg shadow-sm font-semibold h-8 sm:h-9 px-3 sm:px-4 gap-1.5"
             >
               <Plus className="h-4 w-4" />
-              New Project
+              <span className="hidden min-[400px]:inline">New Project</span>
+              <span className="min-[400px]:hidden">New</span>
             </Button>
           </div>
         </div>

@@ -153,11 +153,12 @@ export function InitialSetupModal({
   return (
     <Dialog
       open={open}
-      onOpenChange={(openState) => {
-        if (!openState) onClose();
-      }}
+      onOpenChange={() => {}}
     >
-      <DialogContent className="sm:max-w-[540px] max-h-[90vh] overflow-y-auto border-border/80 bg-background/95 backdrop-blur-md shadow-2xl">
+      <DialogContent
+        showCloseButton={false}
+        className="sm:max-w-[540px] max-h-[90vh] overflow-y-auto border-border/80 bg-background/95 backdrop-blur-md shadow-2xl"
+      >
         <DialogHeader className="space-y-1.5 pb-1">
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-xs">
@@ -409,13 +410,10 @@ export function InitialSetupModal({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/40 mt-1">
-          <Button variant="ghost" onClick={onClose} className="rounded-xl text-xs">
-            Skip Setup
-          </Button>
+        <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/40 mt-1 sm:justify-end">
           <Button
             onClick={handleApply}
-            className="rounded-xl text-xs font-bold gap-1.5 shadow-md shadow-primary/20"
+            className="rounded-xl text-xs font-bold gap-1.5 shadow-md shadow-primary/20 w-full sm:w-auto"
           >
             Start Creating in Studio
             <ArrowRight className="h-3.5 w-3.5" />
