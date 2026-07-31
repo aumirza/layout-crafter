@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { MeasurementUnit, SpaceOptimization } from "@/types/collage";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -30,6 +31,7 @@ import { usePresetStore } from "@/stores/preset-store";
 import { useCollage } from "@/context/CollageContext";
 import { TemplatePresetGrid } from "@/components/TemplatePresetGrid";
 import { PreConfiguredTemplate } from "@/data/template-presets";
+import { GapControls } from "@/components/GapControls";
 import {
   Layout,
   ArrowRight,
@@ -42,6 +44,11 @@ import {
   Minimize2,
   Calculator,
   Sliders,
+  SlidersHorizontal,
+  RotateCcw,
+  LayoutTemplate,
+  RectangleVertical,
+  RectangleHorizontal,
 } from "lucide-react";
 import { EqualDivisionModal } from "@/components/EqualDivisionModal";
 
@@ -66,7 +73,15 @@ export function InitialSetupModal({
   >("pageSize");
   const [equalDivisionOpen, setEqualDivisionOpen] = useState(false);
 
-  const { updateLayout, updatePageSize, collageState } = useCollage();
+  const {
+    updateLayout,
+    updatePageSize,
+    createCustomLayout,
+    collageState,
+    setRowGap,
+    setColumnGap,
+    setGapsLinked,
+  } = useCollage();
 
   const pageSize = collageState.pageSize;
   const layout = collageState.layout;
@@ -76,15 +91,70 @@ export function InitialSetupModal({
   const addCustomPageSize = usePresetStore((state) => state.addCustomPageSize);
   const addCustomLayout = usePresetStore((state) => state.addCustomLayout);
 
-  // Estimate grid matrix and cell capacity
+  // Track base dimensions for cell scale / shrink
+  const [baseDimensions, setBaseDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [scaleOffset, setScaleOffset] = useState<number>(0);
+  const prevLayoutIdRef = useRef<string>("");
+
+  useEffect(() => {
+    const layoutId = layout?.id || "";
+    if (
+      layoutId !== prevLayoutIdRef.current &&
+      layoutId !== "custom" &&
+      !layoutId.startsWith("scaled_")
+    ) {
+      if (layout) {
+        setBaseDimensions({ width: layout.cellWidth, height: layout.cellHeight });
+        setScaleOffset(0);
+        prevLayoutIdRef.current = layoutId;
+      }
+    } else if (!baseDimensions && layout) {
+      setBaseDimensions({ width: layout.cellWidth, height: layout.cellHeight });
+      prevLayoutIdRef.current = layoutId;
+    }
+  }, [layout?.id, layout?.cellWidth, layout?.cellHeight, baseDimensions]);
+
+  const handleScaleChange = (newOffset: number) => {
+    setScaleOffset(newOffset);
+    const baseW = baseDimensions?.width || layout.cellWidth;
+    const baseH = baseDimensions?.height || layout.cellHeight;
+
+    const scaleFactor = 1 + newOffset / 100;
+    const newWidth = Math.max(1, Math.round(baseW * scaleFactor * 10) / 10);
+    const newHeight = Math.max(1, Math.round(baseH * scaleFactor * 10) / 10);
+
+    createCustomLayout(newWidth, newHeight);
+  };
+
+  const handleSetPageOrientation = (targetOrientation: "portrait" | "landscape") => {
+    const currentW = pageSize.width;
+    const currentH = pageSize.height;
+    const isLandscape = currentW >= currentH;
+
+    if (targetOrientation === "landscape" && !isLandscape) {
+      updatePageSize({
+        ...pageSize,
+        width: Math.max(currentW, currentH),
+        height: Math.min(currentW, currentH),
+      });
+    } else if (targetOrientation === "portrait" && isLandscape) {
+      updatePageSize({
+        ...pageSize,
+        width: Math.min(currentW, currentH),
+        height: Math.max(currentW, currentH),
+      });
+    }
+  };
+
+  // Estimate grid matrix and cell capacity based on live state
   const gridInfo = useMemo(() => {
     if (!pageSize || !layout) {
       return { columns: 0, rows: 0, cells: 0, usableWidth: 0, usableHeight: 0 };
     }
     const usableWidth = Math.max(0, pageSize.width - (pageSize.margin || 0) * 2);
     const usableHeight = Math.max(0, pageSize.height - (pageSize.margin || 0) * 2);
-    const columns = Math.max(1, Math.floor(usableWidth / layout.cellWidth));
-    const rows = Math.max(1, Math.floor(usableHeight / layout.cellHeight));
+    const columns = collageState.columns;
+    const rows = collageState.rows;
     return {
       columns,
       rows,
@@ -92,7 +162,7 @@ export function InitialSetupModal({
       usableWidth,
       usableHeight,
     };
-  }, [pageSize, layout]);
+  }, [pageSize, layout, collageState.columns, collageState.rows]);
 
   const handleApply = () => {
     onApplySettings({
@@ -174,7 +244,7 @@ export function InitialSetupModal({
             </Badge>
           </div>
           <DialogDescription className="text-xs text-muted-foreground">
-            Configure paper size, unit formats, and photo layouts or pick a pre-configured template to start creating immediately.
+            Configure paper size, unit formats, photo layout scaling, orientation, margins, and gaps to start creating immediately.
           </DialogDescription>
         </DialogHeader>
 
@@ -189,7 +259,7 @@ export function InitialSetupModal({
           </div>
 
           {/* Unit & Presets Section */}
-          <div className="bg-card p-3.5 rounded-xl border border-border/60 space-y-3 shadow-2xs">
+          <div className="bg-card p-3.5 rounded-xl border border-border/60 space-y-3.5 shadow-2xs">
             <div className="flex justify-between items-center pb-2 border-b border-border/40">
               <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <Ruler className="h-3.5 w-3.5 text-primary" />
@@ -250,6 +320,143 @@ export function InitialSetupModal({
                 />
               </div>
             </div>
+
+            {/* Photo Cell Scale / Shrink Adjuster */}
+            <div className="space-y-1.5 pt-2 border-t border-border/40">
+              <div className="flex justify-between items-center">
+                <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
+                  Scale / Shrink Cell
+                </Label>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0.5">
+                    {scaleOffset > 0 ? `+${scaleOffset}%` : `${scaleOffset}%`}
+                  </Badge>
+                  {scaleOffset !== 0 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleScaleChange(0)}
+                      className="h-5 px-1.5 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Slider -5% to +5% */}
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-[10px] font-mono font-semibold text-amber-500">-5%</span>
+                <Slider
+                  value={[scaleOffset]}
+                  onValueChange={(vals) => {
+                    const val = Array.isArray(vals) ? vals[0] : vals;
+                    if (typeof val === "number") handleScaleChange(val);
+                  }}
+                  min={-5}
+                  max={5}
+                  step={0.5}
+                  className="flex-1"
+                />
+                <span className="text-[10px] font-mono font-semibold text-emerald-500">+5%</span>
+              </div>
+
+              {/* Quick preset percentage buttons */}
+              <div className="flex items-center justify-between pt-0.5">
+                <Button
+                  size="sm"
+                  variant={scaleOffset === -5 ? "default" : "outline"}
+                  onClick={() => handleScaleChange(-5)}
+                  className="h-6 px-2 text-[10px] font-mono rounded border-border/60"
+                >
+                  -5% (Shrink)
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant={scaleOffset === 0 ? "default" : "ghost"}
+                  onClick={() => handleScaleChange(0)}
+                  className="h-6 px-2 text-[10px] font-mono rounded text-muted-foreground hover:text-foreground"
+                >
+                  0% (Normal)
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant={scaleOffset === 5 ? "default" : "outline"}
+                  onClick={() => handleScaleChange(5)}
+                  className="h-6 px-2 text-[10px] font-mono rounded border-border/60"
+                >
+                  +5% (Enlarge)
+                </Button>
+              </div>
+            </div>
+
+            {/* Page Orientation Selector */}
+            <div className="space-y-1.5 pt-2 border-t border-border/40">
+              <div className="flex justify-between items-center">
+                <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <LayoutTemplate className="h-3.5 w-3.5 text-primary" />
+                  Page Orientation
+                </Label>
+                <Badge variant="outline" className="text-[10px] uppercase font-mono font-bold border-primary/30 text-primary">
+                  {pageSize.width >= pageSize.height ? "Landscape" : "Portrait"}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <Button
+                  type="button"
+                  variant={pageSize.width < pageSize.height ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleSetPageOrientation("portrait")}
+                  className="h-8 text-xs font-semibold gap-1.5 rounded-lg"
+                >
+                  <RectangleVertical className="h-3.5 w-3.5 shrink-0" />
+                  <span>Portrait</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant={pageSize.width >= pageSize.height ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleSetPageOrientation("landscape")}
+                  className="h-8 text-xs font-semibold gap-1.5 rounded-lg"
+                >
+                  <RectangleHorizontal className="h-3.5 w-3.5 shrink-0" />
+                  <span>Landscape</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Page Margin Adjuster */}
+            <div className="space-y-1.5 pt-2 border-t border-border/40">
+              <div className="flex justify-between items-center">
+                <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Maximize2 className="h-3.5 w-3.5 text-primary" />
+                  Page Margin
+                </Label>
+                <Badge variant="secondary" className="text-[10px] font-mono font-bold">
+                  {formatDimension(pageSize.margin)} {selectedUnit}
+                </Badge>
+              </div>
+              <Slider
+                value={[pageSize.margin]}
+                onValueChange={(vals) => {
+                  const val = Array.isArray(vals) ? vals[0] : vals;
+                  if (typeof val === "number" && !isNaN(val)) {
+                    updatePageSize({
+                      ...pageSize,
+                      margin: Math.max(0, val),
+                    });
+                  }
+                }}
+                min={0}
+                max={50}
+                step={0.5}
+                className="py-1"
+              />
+            </div>
           </div>
 
           {/* Equal Page Division Banner Card */}
@@ -273,7 +480,18 @@ export function InitialSetupModal({
             </Button>
           </div>
 
-          {/* Space Optimization Segmented Selector */}
+          {/* Grid Spacing & Gap Controls Slider */}
+          <GapControls
+            rowGap={collageState.rowGap}
+            columnGap={collageState.columnGap}
+            gapsLinked={collageState.gapsLinked}
+            onRowGapChange={setRowGap}
+            onColumnGapChange={setColumnGap}
+            onLinkedChange={setGapsLinked}
+            unit={selectedUnit}
+          />
+
+          {/* Preserved Space Optimization Strategy (Commented out as requested)
           <div className="bg-card p-3.5 rounded-xl border border-border/60 space-y-2 shadow-2xs">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
@@ -311,6 +529,7 @@ export function InitialSetupModal({
               </button>
             </div>
           </div>
+          */}
 
           {/* Live Miniature Visual Canvas Preview & Capacity Summary Card */}
           <div className="bg-muted/30 border border-border/60 rounded-xl p-3.5 space-y-3">
@@ -359,9 +578,10 @@ export function InitialSetupModal({
                   )}
                   {Array.from({ length: Math.min(gridInfo.rows, 12) }).map((_, r) =>
                     Array.from({ length: Math.min(gridInfo.columns, 12) }).map((_, c) => {
-                      const gap = 1;
-                      const x = pageSize.margin + c * (layout.cellWidth + gap);
-                      const y = pageSize.margin + r * (layout.cellHeight + gap);
+                      const colGap = collageState.columnGap;
+                      const rowGap = collageState.rowGap;
+                      const x = pageSize.margin + c * (layout.cellWidth + colGap);
+                      const y = pageSize.margin + r * (layout.cellHeight + rowGap);
                       return (
                         <rect
                           key={`${r}-${c}`}
@@ -399,10 +619,18 @@ export function InitialSetupModal({
                     {gridInfo.columns} cols × {gridInfo.rows} rows
                   </span>
                 </div>
+                <div className="flex justify-between py-1 border-b border-border/40">
+                  <span className="text-muted-foreground">Grid Gap</span>
+                  <span className="font-semibold text-foreground font-mono">
+                    {collageState.gapsLinked || collageState.rowGap === collageState.columnGap
+                      ? `${formatDimension(collageState.rowGap)} ${selectedUnit}`
+                      : `${formatDimension(collageState.rowGap)} / ${formatDimension(collageState.columnGap)} ${selectedUnit}`}
+                  </span>
+                </div>
                 <div className="flex justify-between py-1">
                   <span className="text-muted-foreground">Page Margin</span>
                   <span className="font-semibold text-foreground font-mono">
-                    {formatDimension(pageSize.margin)}
+                    {formatDimension(pageSize.margin)} {selectedUnit}
                   </span>
                 </div>
               </div>
