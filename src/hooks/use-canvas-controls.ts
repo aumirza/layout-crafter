@@ -286,6 +286,15 @@ export function useCanvasControls({ pageSize }: UseCanvasControlsProps) {
   }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const target = e.target as HTMLElement | null;
+    const isEditingText =
+      target &&
+      (target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable);
+
+    if (isEditingText) return;
+
     if (e.code === "Space" && !e.repeat) {
       e.preventDefault();
       setIsSpacePressed(true);
@@ -294,6 +303,15 @@ export function useCanvasControls({ pageSize }: UseCanvasControlsProps) {
 
   const handleKeyUp = useCallback(
     (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isEditingText =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+
+      if (isEditingText) return;
+
       if (e.code === "Space") {
         setIsSpacePressed(false);
         if (isDragging) {

@@ -3,10 +3,15 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { pageSizes, createCustomPageSize } from "@/data/page-sizes";
 import { layoutPresets, createCustomLayout } from "@/data/layout-presets";
+import { getProject, saveProject } from "@/lib/db";
+import { SavedProject } from "@/types/library";
+import { generateLowResThumbnail } from "@/lib/thumbnail-generator";
 import {
   CollageState,
   CollageImage,
@@ -69,6 +74,16 @@ interface CollageContextType {
     exportQuality: string;
   };
   updateSettings: (key: string, value: string | boolean) => void;
+  // Active Project Management
+  currentProjectId: string | null;
+  projectTitle: string;
+  isSaving: boolean;
+  lastSavedAt: number | null;
+  setProjectTitle: (title: string) => void;
+  loadProject: (id: string) => Promise<boolean>;
+  createNewProject: (pageSize?: PageSize, layout?: LayoutPreset, title?: string) => Promise<string>;
+  saveCurrentProject: (generateThumbnail?: boolean) => Promise<void>;
+  closeCurrentProject: () => Promise<void>;
 }
 
 const CollageContext = createContext<CollageContextType | undefined>(undefined);
@@ -162,11 +177,26 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     2  // default columnGap
   );
 
+  // Helper function to build empty cells array
+  const createEmptyCells = (rows: number, cols: number): CollageCell[][] => {
+    return Array(rows)
+      .fill(null)
+      .map((_, r) =>
+        Array(cols)
+          .fill(null)
+          .map((_, c) => ({
+            id: `cell-${r}-${c}`,
+            imageId: null,
+            orientation: "auto" as ImageOrientation,
+          }))
+      );
+  };
+
   const [collageState, setCollageState] = useState<CollageState>({
     pageSize: initialPageSize,
     layout: initialLayout,
     images: [],
-    cells: [],
+    cells: createEmptyCells(initialGrid.rows, initialGrid.columns),
     rows: initialGrid.rows,
     columns: initialGrid.columns,
     spaceOptimization: "loose",
@@ -192,10 +222,172 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(key, value.toString());
   };
 
-  const [settings, setSettings] = useState({
-    autoSave: localStorage.getItem("autoSave") === "true",
-    exportQuality: localStorage.getItem("exportQuality") || "high",
-  });
+  // Project tracking state
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [projectTitle, setProjectTitle] = useState<string>("Untitled Collage");
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  const createdAtRef = useRef<number>(Date.now());
+  const isInitialLoadRef = useRef<boolean>(true);
+
+  // Reset initial load flag whenever project ID changes
+  useEffect(() => {
+    isInitialLoadRef.current = true;
+  }, [currentProjectId]);
+
+  const saveCurrentProject = useCallback(async (generateThumbnail: boolean = false) => {
+    if (!currentProjectId) return;
+    setIsSaving(true);
+    try {
+      const now = Date.now();
+      let thumbnail: string | undefined = undefined;
+      if (generateThumbnail) {
+        thumbnail = await generateLowResThumbnail(collageState);
+      }
+
+      const projectRecord: SavedProject = {
+        id: currentProjectId,
+        title: projectTitle,
+        updatedAt: now,
+        createdAt: createdAtRef.current || now,
+        ...(thumbnail ? { thumbnail } : {}),
+        pageSize: collageState.pageSize,
+        layout: collageState.layout,
+        state: collageState,
+      };
+      await saveProject(projectRecord);
+      setLastSavedAt(now);
+    } catch (err) {
+      console.error("Auto-save failed:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [currentProjectId, projectTitle, collageState]);
+
+  const closeCurrentProject = useCallback(async () => {
+    if (!currentProjectId) return;
+    try {
+      const thumbnail = await generateLowResThumbnail(collageState);
+      const now = Date.now();
+      const projectRecord: SavedProject = {
+        id: currentProjectId,
+        title: projectTitle,
+        updatedAt: now,
+        createdAt: createdAtRef.current || now,
+        thumbnail,
+        pageSize: collageState.pageSize,
+        layout: collageState.layout,
+        state: collageState,
+      };
+      await saveProject(projectRecord);
+      setLastSavedAt(now);
+    } catch (err) {
+      console.error("Failed to generate thumbnail on project close:", err);
+    }
+  }, [currentProjectId, projectTitle, collageState]);
+
+  // Load project from IndexedDB
+  const loadProject = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      const project = await getProject(id);
+      if (!project) return false;
+
+      isInitialLoadRef.current = true;
+      createdAtRef.current = project.createdAt || project.updatedAt;
+      setCurrentProjectId(project.id);
+      setProjectTitle(project.title);
+      setLastSavedAt(project.updatedAt);
+      if (project.state) {
+        setCollageState(project.state);
+      }
+      return true;
+    } catch (err) {
+      console.error(`Error loading project ${id}:`, err);
+      return false;
+    }
+  }, []);
+
+  // Create new project
+  const createNewProject = useCallback(
+    async (
+      customPageSize?: PageSize,
+      customLayout?: LayoutPreset,
+      title?: string
+    ): Promise<string> => {
+      const now = Date.now();
+      const newId = `proj_${now}_${Math.random().toString(36).substring(2, 7)}`;
+      const pTitle = title || "Untitled Collage";
+      const pSize = customPageSize || initialPageSize;
+      const pLayout = customLayout || initialLayout;
+
+      const calcGrid = calculateGridDimensions(
+        pSize.width,
+        pSize.height,
+        pLayout.cellWidth,
+        pLayout.cellHeight,
+        pSize.margin,
+        "loose",
+        2,
+        2
+      );
+
+      const newState: CollageState = {
+        pageSize: pSize,
+        layout: pLayout,
+        images: [],
+        cells: createEmptyCells(calcGrid.rows, calcGrid.columns),
+        rows: calcGrid.rows,
+        columns: calcGrid.columns,
+        spaceOptimization: "loose",
+        showCuttingMarkers: getDefaultShowCuttingMarkers(),
+        markerColor: "#9ca3af",
+        markerSize: 5,
+        selectedUnit: getDefaultUnit(),
+        rowGap: 2,
+        columnGap: 2,
+        gapsLinked: true,
+        useKonvaCanvas: localStorage.getItem("useKonvaCanvas") !== "false",
+      };
+
+      const newProject: SavedProject = {
+        id: newId,
+        title: pTitle,
+        createdAt: now,
+        updatedAt: now,
+        pageSize: pSize,
+        layout: pLayout,
+        state: newState,
+      };
+
+      await saveProject(newProject);
+
+      isInitialLoadRef.current = true;
+      createdAtRef.current = now;
+      setCurrentProjectId(newId);
+      setProjectTitle(pTitle);
+      setLastSavedAt(now);
+      setCollageState(newState);
+
+      return newId;
+    },
+    [initialPageSize, initialLayout]
+  );
+
+  // Debounced auto-save effect whenever collageState or projectTitle changes
+  useEffect(() => {
+    if (!currentProjectId || !appSettings.autoSave) return;
+
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      saveCurrentProject();
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [collageState, projectTitle, currentProjectId, appSettings.autoSave, saveCurrentProject]);
 
   const updatePageSize = (newPageSize: PageSize) => {
     setCollageState((prev) => {
@@ -1167,6 +1359,15 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         setUseKonvaCanvas,
         settings: appSettings,
         updateSettings,
+        currentProjectId,
+        projectTitle,
+        isSaving,
+        lastSavedAt,
+        setProjectTitle,
+        loadProject,
+        createNewProject,
+        saveCurrentProject,
+        closeCurrentProject,
       }}
     >
       {children}
