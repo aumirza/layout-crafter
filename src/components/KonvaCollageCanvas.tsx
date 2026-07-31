@@ -176,6 +176,7 @@ export const KonvaCollageCanvas = forwardRef<HTMLDivElement, KonvaCollageCanvasP
       selectedUnit,
       showCuttingMarkers,
       markerColor,
+      markerSize,
       rowGap,
       columnGap,
     } = collageState;
@@ -300,41 +301,44 @@ export const KonvaCollageCanvas = forwardRef<HTMLDivElement, KonvaCollageCanvasP
                       </Group>
 
                       {/* Cutting Markers per Cell */}
-                      {showCuttingMarkers && (
-                        <>
-                          {/* Top Left */}
-                          <Line
-                            points={[0, 8, 0, 0, 8, 0]}
-                            stroke={markerColor || "#9ca3af"}
-                            strokeWidth={1}
-                          />
-                          {/* Top Right */}
-                          <Line
-                            points={[cellPos.width - 8, 0, cellPos.width, 0, cellPos.width, 8]}
-                            stroke={markerColor || "#9ca3af"}
-                            strokeWidth={1}
-                          />
-                          {/* Bottom Left */}
-                          <Line
-                            points={[0, cellPos.height - 8, 0, cellPos.height, 8, cellPos.height]}
-                            stroke={markerColor || "#9ca3af"}
-                            strokeWidth={1}
-                          />
-                          {/* Bottom Right */}
-                          <Line
-                            points={[
-                              cellPos.width - 8,
-                              cellPos.height,
-                              cellPos.width,
-                              cellPos.height,
-                              cellPos.width,
-                              cellPos.height - 8,
-                            ]}
-                            stroke={markerColor || "#9ca3af"}
-                            strokeWidth={1}
-                          />
-                        </>
-                      )}
+                      {showCuttingMarkers && (() => {
+                        const markerPx = Math.max(4, Math.round(((markerSize ?? 5) / 25.4) * dpi));
+                        return (
+                          <>
+                            {/* Top Left */}
+                            <Line
+                              points={[0, markerPx, 0, 0, markerPx, 0]}
+                              stroke={markerColor || "#9ca3af"}
+                              strokeWidth={1}
+                            />
+                            {/* Top Right */}
+                            <Line
+                              points={[cellPos.width - markerPx, 0, cellPos.width, 0, cellPos.width, markerPx]}
+                              stroke={markerColor || "#9ca3af"}
+                              strokeWidth={1}
+                            />
+                            {/* Bottom Left */}
+                            <Line
+                              points={[0, cellPos.height - markerPx, 0, cellPos.height, markerPx, cellPos.height]}
+                              stroke={markerColor || "#9ca3af"}
+                              strokeWidth={1}
+                            />
+                            {/* Bottom Right */}
+                            <Line
+                              points={[
+                                cellPos.width - markerPx,
+                                cellPos.height,
+                                cellPos.width,
+                                cellPos.height,
+                                cellPos.width,
+                                cellPos.height - markerPx,
+                              ]}
+                              stroke={markerColor || "#9ca3af"}
+                              strokeWidth={1}
+                            />
+                          </>
+                        );
+                      })()}
                     </Group>
                   );
                 })
