@@ -60,6 +60,8 @@ interface CollageContextType {
   setColumnGap: (gap: number) => void;
   setGapsLinked: (linked: boolean) => void;
   updateGap: (type: 'row' | 'column', value: number) => void;
+  // Feature flag functions
+  setUseKonvaCanvas: (enabled: boolean) => void;
   // Add shared app settings
   settings: {
     autoSave: boolean;
@@ -173,6 +175,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     rowGap: 2, // Default: 2mm
     columnGap: 2, // Default: 2mm
     gapsLinked: true, // Default: linked
+    useKonvaCanvas: localStorage.getItem("useKonvaCanvas") !== "false", // Default: true
   });
 
   // App settings state
@@ -1029,10 +1032,13 @@ export function CollageProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Initialize cells when the component first mounts
-  useState(() => {
-    initializeCells();
-  });
+  const setUseKonvaCanvas = useCallback((enabled: boolean) => {
+    setCollageState((prev) => ({
+      ...prev,
+      useKonvaCanvas: enabled,
+    }));
+    localStorage.setItem("useKonvaCanvas", enabled.toString());
+  }, []);
 
   return (
     <CollageContext.Provider
@@ -1061,6 +1067,7 @@ export function CollageProvider({ children }: { children: ReactNode }) {
         setColumnGap,
         setGapsLinked,
         updateGap,
+        setUseKonvaCanvas,
         settings: appSettings,
         updateSettings,
       }}

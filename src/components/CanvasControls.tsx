@@ -5,8 +5,10 @@ import {
   RotateCcw,
   MoveHorizontal,
   Maximize2,
+  Layers,
 } from "lucide-react";
 import { useCanvasControlsContext } from "@/context/CanvasControlsContext";
+import { useCollage } from "@/context/CollageContext";
 
 export function CanvasControls() {
   const {
@@ -17,8 +19,25 @@ export function CanvasControls() {
     handleFitToContainer,
   } = useCanvasControlsContext();
 
+  const { collageState, setUseKonvaCanvas } = useCollage();
+  const isKonva = collageState.useKonvaCanvas !== false;
+
   return (
     <div className="absolute bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-20 backdrop-blur-xl bg-card/90 border border-border shadow-xl rounded-full px-3.5 py-1.5 flex items-center gap-2 transition-colors text-card-foreground">
+      {/* Engine Switcher Toggle Pill */}
+      <div className="flex items-center border-r border-border pr-2.5">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 px-2.5 rounded-full text-[11px] font-medium gap-1.5 border-primary/20 hover:bg-primary/10 transition-colors"
+          onClick={() => setUseKonvaCanvas(!isKonva)}
+          title={`Click to switch to ${isKonva ? "Legacy HTML5 Canvas" : "Konva.js Engine"}`}
+        >
+          <Layers className="h-3 w-3 text-primary" />
+          <span>{isKonva ? "Konva Engine" : "Legacy Canvas"}</span>
+        </Button>
+      </div>
+
       <div className="flex items-center gap-1 border-r border-border pr-2">
         <Button
           variant="ghost"
