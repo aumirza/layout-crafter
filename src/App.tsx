@@ -6,20 +6,24 @@ import { ThemeProvider } from './providers/ThemeProvider';
 import Index from './pages/Index';
 import Editor from './pages/Editor';
 import NotFound from './pages/NotFound';
+import { TooltipProvider } from './components/ui/tooltip';
 
 function App() {
   return (
     <ThemeProvider>
-      <CollageProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/editor" element={<Editor />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-        </Router>
-      </CollageProvider>
+      <TooltipProvider>
+
+        <CollageProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/editor" element={<Editor />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+          </Router>
+        </CollageProvider>
+      </TooltipProvider>
     </ThemeProvider>
   );
 }

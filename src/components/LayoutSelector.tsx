@@ -76,7 +76,7 @@ export function LayoutSelector() {
   return (
     <div className="space-y-4">
       {/* Equal Page Division Action Banner */}
-      <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 p-3 rounded-xl border border-purple-500/20 space-y-2">
+      <div className="bg-linear-to-r from-purple-500/10 to-indigo-500/10 p-3 rounded-xl border border-purple-500/20 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold text-xs">
             <Grid className="h-4 w-4" />
@@ -91,7 +91,7 @@ export function LayoutSelector() {
         </p>
         <Button
           onClick={() => setIsEqualDivisionOpen(true)}
-          className="w-full h-8 text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg gap-1.5 shadow-sm"
+          className="w-full h-8 text-xs font-bold bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg gap-1.5 shadow-sm"
         >
           <Grid className="h-3.5 w-3.5" />
           Divide Page into Pieces...

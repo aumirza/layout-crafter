@@ -64,7 +64,7 @@ export function CollageSidebar({ collageRef }: CollageSidebarProps) {
             to="/"
             className="flex items-center gap-2 group text-foreground hover:text-primary transition-colors"
           >
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-sm">
+            <div className="h-7 w-7 rounded-lg bg-linear-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-sm">
               <Layout className="h-4 w-4" />
             </div>
             <span className="font-extrabold text-base tracking-tight">

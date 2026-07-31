@@ -89,7 +89,7 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
             <span>{getFitLabel()}</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="min-w-[120px] z-[9999]">
+        <DropdownMenuContent align="start" className="min-w-[120px] z-9999">
           <DropdownMenuItem
             onClick={() => handleFitChange("cover")}
             className="cursor-pointer"
@@ -164,7 +164,7 @@ export function ImageSettings({ image, onUpdate }: ImageSettingsProps) {
             <span>{getOrientationLabel()}</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="min-w-[120px] z-[9999]">
+        <DropdownMenuContent align="start" className="min-w-[120px] z-9999">
           <DropdownMenuItem
             onClick={() => handleOrientationChange("auto")}
             className="cursor-pointer"

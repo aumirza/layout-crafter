@@ -142,7 +142,7 @@ export function InitialSetupModal({
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-2">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-sm">
+            <div className="h-8 w-8 rounded-xl bg-linear-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-sm">
               <Layout className="h-4 w-4" />
             </div>
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
@@ -224,7 +224,7 @@ export function InitialSetupModal({
           </div>
 
           {/* Equal Page Division Banner Card */}
-          <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 p-3 rounded-xl border border-purple-500/20 flex items-center justify-between">
+          <div className="bg-linear-to-r from-purple-500/10 to-indigo-500/10 p-3 rounded-xl border border-purple-500/20 flex items-center justify-between">
             <div>
               <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <Grid className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />

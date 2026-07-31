@@ -21,7 +21,7 @@ export function Header() {
         <div className="h-4 w-px bg-border/60 hidden sm:block" />
 
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-sm group-hover:scale-105 transition-transform">
+          <div className="h-7 w-7 rounded-lg bg-linear-to-tr from-primary to-purple-600 flex items-center justify-center text-primary-foreground shadow-sm group-hover:scale-105 transition-transform">
             <Layout className="h-4 w-4" />
           </div>
           <span className="font-extrabold text-base tracking-tight hidden sm:inline-block">
