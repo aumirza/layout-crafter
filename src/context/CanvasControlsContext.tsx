@@ -14,6 +14,9 @@ interface CanvasControlsContextType {
   handleMouseDown: (e: React.MouseEvent) => void;
   handleMouseMove: (e: React.MouseEvent) => void;
   handleMouseUp: () => void;
+  handleTouchStart: (e: React.TouchEvent) => void;
+  handleTouchMove: (e: React.TouchEvent) => void;
+  handleTouchEnd: () => void;
   handleWheel: (e: WheelEvent) => void;
 }
 
